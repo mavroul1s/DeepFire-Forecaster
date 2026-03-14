@@ -1,0 +1,16 @@
+{
+  "model": "HybridAFNet_v2",
+  "eval_set": "test",
+  "n_fires": 12,
+  "threshold": 0.45,
+  "F1": 0.761054,
+  "IoU": 0.614276,
+  "precision": 0.694553,
+  "recall": 0.841639,
+  "mF1": 0.545906,
+  "TP": 15301,
+  "FP": 6729,
+  "FN": 2879,
+  "best_threshold": 0.4,
+  "best_threshold_F1": 0.761832
+}
