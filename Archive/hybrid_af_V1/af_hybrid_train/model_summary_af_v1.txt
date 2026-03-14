@@ -1,0 +1,108 @@
+==========================================================================================
+HybridAFNet v1 -- Architecture Summary
+==========================================================================================
+Input  : (N, C=8, T=6, H, W)
+Output : (N, 2, H, W) -- 2-class logits for last timestep
+
+Layer                                              Type                         Params Weight shape
+----------------------------------------------------------------------------------------------------
+enc1.block.0                                       Conv2d                        3,456 (48, 8, 3, 3)
+enc1.block.1                                       BatchNorm2d                      96 (48,)
+enc1.block.3                                       Conv2d                       20,736 (48, 48, 3, 3)
+enc1.block.4                                       BatchNorm2d                      96 (48,)
+  >> enc1 subtotal : 24,384
+
+enc2.block.0                                       Conv2d                       41,472 (96, 48, 3, 3)
+enc2.block.1                                       BatchNorm2d                     192 (96,)
+enc2.block.3                                       Conv2d                       82,944 (96, 96, 3, 3)
+enc2.block.4                                       BatchNorm2d                     192 (96,)
+  >> enc2 subtotal : 124,800
+
+enc3.block.0                                       Conv2d                      165,888 (192, 96, 3, 3)
+enc3.block.1                                       BatchNorm2d                     384 (192,)
+enc3.block.3                                       Conv2d                      331,776 (192, 192, 3, 3)
+enc3.block.4                                       BatchNorm2d                     384 (192,)
+  >> enc3 subtotal : 498,432
+
+enc4.block.0                                       Conv2d                      663,552 (384, 192, 3, 3)
+enc4.block.1                                       BatchNorm2d                     768 (384,)
+enc4.block.3                                       Conv2d                    1,327,104 (384, 384, 3, 3)
+enc4.block.4                                       BatchNorm2d                     768 (384,)
+  >> enc4 subtotal : 1,992,192
+
+temporal.transformer.layers.0.self_attn.out_proj   NonDynamicallyQuantizableLinear      147,840 (384, 384)
+temporal.transformer.layers.0.linear1              Linear                      197,120 (512, 384)
+temporal.transformer.layers.0.linear2              Linear                      196,992 (384, 512)
+temporal.transformer.layers.0.norm1                LayerNorm                       768 (384,)
+temporal.transformer.layers.0.norm2                LayerNorm                       768 (384,)
+temporal.transformer.layers.1.self_attn.out_proj   NonDynamicallyQuantizableLinear      147,840 (384, 384)
+temporal.transformer.layers.1.linear1              Linear                      197,120 (512, 384)
+temporal.transformer.layers.1.linear2              Linear                      196,992 (384, 512)
+temporal.transformer.layers.1.norm1                LayerNorm                       768 (384,)
+temporal.transformer.layers.1.norm2                LayerNorm                       768 (384,)
+temporal.transformer.layers.2.self_attn.out_proj   NonDynamicallyQuantizableLinear      147,840 (384, 384)
+temporal.transformer.layers.2.linear1              Linear                      197,120 (512, 384)
+temporal.transformer.layers.2.linear2              Linear                      196,992 (384, 512)
+temporal.transformer.layers.2.norm1                LayerNorm                       768 (384,)
+temporal.transformer.layers.2.norm2                LayerNorm                       768 (384,)
+temporal.transformer.layers.3.self_attn.out_proj   NonDynamicallyQuantizableLinear      147,840 (384, 384)
+temporal.transformer.layers.3.linear1              Linear                      197,120 (512, 384)
+temporal.transformer.layers.3.linear2              Linear                      196,992 (384, 512)
+temporal.transformer.layers.3.norm1                LayerNorm                       768 (384,)
+temporal.transformer.layers.3.norm2                LayerNorm                       768 (384,)
+temporal.transformer.norm                          LayerNorm                       768 (384,)
+  >> temporal subtotal : 2,174,720
+
+proj.0                                             Linear                      147,840 (384, 384)
+  >> proj subtotal : 147,840
+
+dec4.block.0                                       Conv2d                      995,328 (192, 576, 3, 3)
+dec4.block.1                                       BatchNorm2d                     384 (192,)
+dec4.block.3                                       Conv2d                      331,776 (192, 192, 3, 3)
+dec4.block.4                                       BatchNorm2d                     384 (192,)
+  >> dec4 subtotal : 1,327,872
+
+dec3.block.0                                       Conv2d                      248,832 (96, 288, 3, 3)
+dec3.block.1                                       BatchNorm2d                     192 (96,)
+dec3.block.3                                       Conv2d                       82,944 (96, 96, 3, 3)
+dec3.block.4                                       BatchNorm2d                     192 (96,)
+  >> dec3 subtotal : 332,160
+
+dec2.block.0                                       Conv2d                       62,208 (48, 144, 3, 3)
+dec2.block.1                                       BatchNorm2d                      96 (48,)
+dec2.block.3                                       Conv2d                       20,736 (48, 48, 3, 3)
+dec2.block.4                                       BatchNorm2d                      96 (48,)
+  >> dec2 subtotal : 83,136
+
+dec1.block.0                                       Conv2d                       20,736 (48, 48, 3, 3)
+dec1.block.1                                       BatchNorm2d                      96 (48,)
+dec1.block.3                                       Conv2d                       20,736 (48, 48, 3, 3)
+dec1.block.4                                       BatchNorm2d                      96 (48,)
+  >> dec1 subtotal : 41,664
+
+head                                               Conv2d                           98 (2, 48, 1, 1)
+  >> head subtotal : 98
+
+==========================================================================================
+TOTAL : 6,747,298  (6.747M)
+
+Section breakdown:
+Section                    Params    % total
+--------------------------------------------
+enc1                       24,384       0.4%
+enc2                      124,800       1.8%
+enc3                      498,432       7.4%
+enc4                    1,992,192      29.5%
+temporal                2,174,720      32.2%
+proj                      147,840       2.2%
+dec4                    1,327,872      19.7%
+dec3                      332,160       4.9%
+dec2                       83,136       1.2%
+dec1                       41,664       0.6%
+head                           98       0.0%
+
+Component roles:
+  CNN encoder (spatial feature extraction) : 2,639,808  (39.1%)
+  Temporal Transformer (time reasoning)    : 2,174,720  (32.2%)
+  CNN decoder (spatial reconstruction)     : 1,784,832  (26.5%)
+==========================================================================================
