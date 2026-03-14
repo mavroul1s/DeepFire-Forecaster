@@ -1,0 +1,87 @@
+================================================================================
+UNet3D v4 -- Model Architecture Analysis
+================================================================================
+Input shape  : (N, 26, 2, H, W)
+Output shape : (N, 2, H, W)  -- 2-class logits for last timestep
+Base channels: 32
+
+Layer                                         Type                       Params Shape
+----------------------------------------------------------------------------------------------------
+enc1.block.0                                  Conv3d                     22,464 (32, 26, 3, 3, 3)
+enc1.block.1                                  BatchNorm3d                    64 (32,)
+enc1.block.3                                  Conv3d                     27,648 (32, 32, 3, 3, 3)
+enc1.block.4                                  BatchNorm3d                    64 (32,)
+  >> enc1 subtotal: 50,240
+
+enc2.block.0                                  Conv3d                     55,296 (64, 32, 3, 3, 3)
+enc2.block.1                                  BatchNorm3d                   128 (64,)
+enc2.block.3                                  Conv3d                    110,592 (64, 64, 3, 3, 3)
+enc2.block.4                                  BatchNorm3d                   128 (64,)
+  >> enc2 subtotal: 166,144
+
+enc3.block.0                                  Conv3d                    221,184 (128, 64, 3, 3, 3)
+enc3.block.1                                  BatchNorm3d                   256 (128,)
+enc3.block.3                                  Conv3d                    442,368 (128, 128, 3, 3, 3)
+enc3.block.4                                  BatchNorm3d                   256 (128,)
+  >> enc3 subtotal: 664,064
+
+enc4.block.0                                  Conv3d                    884,736 (256, 128, 3, 3, 3)
+enc4.block.1                                  BatchNorm3d                   512 (256,)
+enc4.block.3                                  Conv3d                  1,769,472 (256, 256, 3, 3, 3)
+enc4.block.4                                  BatchNorm3d                   512 (256,)
+  >> enc4 subtotal: 2,655,232
+
+bottleneck.block.0                            Conv3d                  3,538,944 (512, 256, 3, 3, 3)
+bottleneck.block.1                            BatchNorm3d                 1,024 (512,)
+bottleneck.block.3                            Conv3d                  7,077,888 (512, 512, 3, 3, 3)
+bottleneck.block.4                            BatchNorm3d                 1,024 (512,)
+  >> bottleneck subtotal: 10,618,880
+
+dec4.block.0                                  Conv3d                  5,308,416 (256, 768, 3, 3, 3)
+dec4.block.1                                  BatchNorm3d                   512 (256,)
+dec4.block.3                                  Conv3d                  1,769,472 (256, 256, 3, 3, 3)
+dec4.block.4                                  BatchNorm3d                   512 (256,)
+  >> dec4 subtotal: 7,078,912
+
+dec3.block.0                                  Conv3d                  1,327,104 (128, 384, 3, 3, 3)
+dec3.block.1                                  BatchNorm3d                   256 (128,)
+dec3.block.3                                  Conv3d                    442,368 (128, 128, 3, 3, 3)
+dec3.block.4                                  BatchNorm3d                   256 (128,)
+  >> dec3 subtotal: 1,769,984
+
+dec2.block.0                                  Conv3d                    331,776 (64, 192, 3, 3, 3)
+dec2.block.1                                  BatchNorm3d                   128 (64,)
+dec2.block.3                                  Conv3d                    110,592 (64, 64, 3, 3, 3)
+dec2.block.4                                  BatchNorm3d                   128 (64,)
+  >> dec2 subtotal: 442,624
+
+dec1.block.0                                  Conv3d                     82,944 (32, 96, 3, 3, 3)
+dec1.block.1                                  BatchNorm3d                    64 (32,)
+dec1.block.3                                  Conv3d                     27,648 (32, 32, 3, 3, 3)
+dec1.block.4                                  BatchNorm3d                    64 (32,)
+  >> dec1 subtotal: 110,720
+
+head                                          Conv3d                         66 (2, 32, 1, 1, 1)
+  >> head subtotal: 66
+
+================================================================================
+TOTAL PARAMETERS : 23,556,866  (23.557M)
+
+Section summary:
+Section                    Params   % of total
+----------------------------------------------
+enc1                       50,240         0.2%
+enc2                      166,144         0.7%
+enc3                      664,064         2.8%
+enc4                    2,655,232        11.3%
+bottleneck             10,618,880        45.1%
+dec4                    7,078,912        30.1%
+dec3                    1,769,984         7.5%
+dec2                      442,624         1.9%
+dec1                      110,720         0.5%
+head                           66         0.0%
+
+Memory estimate (float32):
+  Weights : 89.9 MB
+  Activations (batch=1, 128x128): ~15.5 MB
+================================================================================
