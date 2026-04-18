@@ -65,6 +65,21 @@ Model development deferred; findings are reported as a standalone data-quality c
 
 ![FP Benchmark](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_compare.png)
 
+**Per-fire prediction maps (sample of test fires):**
+
+<table>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3451712013120211011.png"/></td>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3568711855020210818.png"/></td>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3604711863120210910.png"/></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_ID4453211532920210810.png"/></td>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_WA4828511853120210713.png"/></td>
+<td><img src="https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_MT4568311385420210708.png"/></td>
+</tr>
+</table>
+
 ---
 
 ## Key Contributions
