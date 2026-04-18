@@ -61,13 +61,9 @@ Model development deferred; findings are reported as a standalone data-quality c
 
 **Training curves and benchmark comparison:**
 
-![FP Curves](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_v6_curves.png)
+![FP Curves](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_curves.png)
 
-![FP Benchmark](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_v6_compare.png)
-
-**Per-fire F1 on test set:**
-
-![FP Per Fire F1](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_v6_fire_maps/_summary_per_fire_f1.png)
+![FP Benchmark](https://raw.githubusercontent.com/mavroul1s/DeepFire-Forecaster/main/fire_progression/fire_pred_2_day_input/fire_pred_results/fp_compare.png)
 
 ---
 
@@ -141,7 +137,7 @@ DeepFire-Forecaster/
 |   |           |-- plots/
 |   |-- af_2_day_input/
 |       |-- train/
-|       |   |-- af_2day_input_train.ipynb
+|       |   |-- af_2day_input__train.ipynb
 |       |   |-- results/
 |       |       |-- history_v6.csv
 |       |       |-- results_v6.json
@@ -165,10 +161,10 @@ DeepFire-Forecaster/
 |   |-- fire_pred_2_day_input/
 |       |-- fire_pred_2day_input.ipynb
 |       |-- fire_pred_results/
-|           |-- fp_v6_curves.png
-|           |-- fp_v6_compare.png
-|           |-- fp_v6_results.json
-|           |-- fp_v6_fire_maps/
+|           |-- fp_curves.png
+|           |-- fp_compare.png
+|           |-- fp_results.json
+|           |-- fp_fire_maps/
 |
 |-- paper/
     |-- paper_draft.md

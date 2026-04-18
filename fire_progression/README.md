@@ -70,19 +70,30 @@ Beats the best paper F1 by +4.9% while using TS=2 instead of TS=6.
 
 ## Training Curves
 
-![FP Training Curves](fire_pred_2_day_input/fire_pred_results/fp_v6_curves.png)
+![FP Training Curves](fire_pred_2_day_input/fire_pred_results/fp_curves.png)
 
 ---
 
 ## Benchmark Comparison vs. Paper Baselines
 
-![FP Benchmark Comparison](fire_pred_2_day_input/fire_pred_results/fp_v6_compare.png)
+![FP Benchmark Comparison](fire_pred_2_day_input/fire_pred_results/fp_compare.png)
 
 ---
 
-## Per-Fire F1 on Test Set
+## Per-Fire Prediction Maps
 
-![FP Per Fire F1](fire_pred_2_day_input/fire_pred_results/fp_v6_fire_maps/_summary_per_fire_f1.png)
+<table>
+<tr>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3451712013120211011.png"/></td>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3568711855020210818.png"/></td>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_CA3604711863120210910.png"/></td>
+</tr>
+<tr>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_ID4453211532920210810.png"/></td>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_WA4828511853120210713.png"/></td>
+<td><img src="fire_pred_2_day_input/fire_pred_results/fp_fire_maps/US_2021_MT4568311385420210708.png"/></td>
+</tr>
+</table>
 
 ---
 
@@ -102,16 +113,15 @@ Beats the best paper F1 by +4.9% while using TS=2 instead of TS=6.
 fire_progression/
 |-- README.md
 |-- diagnostics/
-|   |-- fire_pred_diag.ipynb          # label audit, window-level analysis, AZ fire analysis
+|   |-- fire_pred_diag.ipynb           # label audit, window-level analysis, AZ fire analysis
 |-- fire_pred_2_day_input/
-    |-- fire_pred_2day_input.ipynb    # full train + val + test eval + plots, TS=2
+    |-- fire_pred_2day_input.ipynb     # full train + val + test eval + plots, TS=2
     |-- fire_pred_results/
-        |-- fp_v6_curves.png
-        |-- fp_v6_compare.png
-        |-- fp_v6_results.json
-        |-- fp_v6_fire_maps/
-            |-- _summary_per_fire_f1.png
-            |-- US_2021_*.png          # per-fire prediction maps (18 fires)
+        |-- fp_curves.png
+        |-- fp_compare.png
+        |-- fp_results.json
+        |-- fp_fire_maps/
+            |-- US_2021_*.png          # per-fire prediction maps
 ```
 
 ---
