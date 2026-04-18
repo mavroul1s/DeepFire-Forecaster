@@ -28,29 +28,31 @@ Kaggle release. The effective validation set is 14 fires, 8 usable.
 The FP test set is the 24 US_2021 fires (same as BA test). The 17 named
 fires are the AF test set and are not used here.
 
-See `docs/FP_LABEL_AUDIT_REPORT.md` for the full per-fire and per-window breakdown.
+See `../docs/FP_LABEL_AUDIT_REPORT.md` for the full per-fire and per-window breakdown.
+
+---
 
 ## Architecture: SpaSE-UNet3D
 
-The same SE-UNet3D backbone used for AF detection, adapted for fire progression
-with a 27-channel input (8 VIIRS spectral bands + 18 FirePred auxiliary bands +
-1 cumulative BA mask). The architecture is named **SpaSE-UNet3D**
-(Spatial Squeeze-and-Excitation 3D UNet) to reflect its two defining traits:
+The same backbone used for AF detection, adapted for fire progression with a
+27-channel input (8 VIIRS spectral bands + 18 FirePred auxiliary bands + 1
+cumulative BA mask).
 
 - Spatial-only (1,3,3) convolutions throughout -- no temporal mixing across days,
-  which keeps the model portable across TS lengths and avoids overfitting on the
-  short windows in this dataset.
+  keeps the model portable across TS lengths and avoids overfitting on short windows.
 - Squeeze-and-Excitation (SE) channel attention after every encoder stage --
   learns which spectral bands and auxiliary features are most informative per
   spatial context.
 - ASPP bottleneck (dilation rates 1/6/12) for multi-scale receptive fields.
-- Dice + Focal + BCE combined loss, with pos_weight to handle class imbalance
+- Dice + Focal + BCE combined loss with pos_weight to handle class imbalance
   in the sparse progression signal.
 - Test-time augmentation (8x TTA) and threshold sweep at inference.
 
 **Note on AZ fires:** Arizona 2021 fires have burned area fractions below 0.001%
 within the 256x256 crop. These fires produce F1=0.000 regardless of model quality
 and are excluded from aggregate test scoring.
+
+---
 
 ## Results
 
@@ -64,6 +66,26 @@ and are excluded from aggregate test scoring.
 
 Beats the best paper F1 by +4.9% while using TS=2 instead of TS=6.
 
+---
+
+## Training Curves
+
+![FP Training Curves](fire_pred_2_day_input/fire_pred_results/fp_v6_curves.png)
+
+---
+
+## Benchmark Comparison vs. Paper Baselines
+
+![FP Benchmark Comparison](fire_pred_2_day_input/fire_pred_results/fp_v6_compare.png)
+
+---
+
+## Per-Fire F1 on Test Set
+
+![FP Per Fire F1](fire_pred_2_day_input/fire_pred_results/fp_v6_fire_maps/_summary_per_fire_f1.png)
+
+---
+
 ## Lessons Learned
 
 - Deep supervision overfits on the small effective training set for FP.
@@ -72,13 +94,35 @@ Beats the best paper F1 by +4.9% while using TS=2 instead of TS=6.
   threshold sweep is necessary.
 - AZ fires contribute zero signal and must be excluded before reporting aggregate F1.
 
+---
+
+## Folder Structure
+
+```
+fire_progression/
+|-- README.md
+|-- diagnostics/
+|   |-- fire_pred_diag.ipynb          # label audit, window-level analysis, AZ fire analysis
+|-- fire_pred_2_day_input/
+    |-- fire_pred_2day_input.ipynb    # full train + val + test eval + plots, TS=2
+    |-- fire_pred_results/
+        |-- fp_v6_curves.png
+        |-- fp_v6_compare.png
+        |-- fp_v6_results.json
+        |-- fp_v6_fire_maps/
+            |-- _summary_per_fire_f1.png
+            |-- US_2021_*.png          # per-fire prediction maps (18 fires)
+```
+
+---
+
 ## Notebooks
 
-The FP task uses a single self-contained notebook per run. Training, validation,
-test evaluation, threshold sweep, and result plots all run sequentially in one session
-within the 12-hour Kaggle limit. There is no separate inference notebook.
+The FP task uses a single self-contained notebook. Training, validation,
+test evaluation, threshold sweep, and result plots all run sequentially in one
+session within the 12-hour Kaggle limit. There is no separate inference notebook.
 
 | Notebook | Purpose |
 |----------|---------|
 | `diagnostics/fire_pred_diag.ipynb` | Label completeness audit, window-level analysis, AZ fire analysis |
-| `fp_ts2.ipynb` | SpaSE-UNet3D: full train + val + test eval + plots, TS=2 |
+| `fire_pred_2_day_input/fire_pred_2day_input.ipynb` | SpaSE-UNet3D: full train + val + test eval + plots, TS=2 |
