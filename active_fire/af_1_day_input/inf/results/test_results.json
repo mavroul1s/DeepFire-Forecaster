@@ -1,0 +1,100 @@
+{
+  "model": "SE-UNet3D",
+  "n_params_M": 32.88,
+  "ts_length": 1,
+  "checkpoint": "best_v6.pt",
+  "train_val_f1": 0.8225687644850075,
+  "n_test_fires": 15,
+  "excluded_fires": [
+    "calfcanyon_fire",
+    "mosquito_fire"
+  ],
+  "default_threshold": 0.5,
+  "optimal_threshold": 0.22,
+  "test_f1_default": 0.853,
+  "test_f1_optimal": 0.8538,
+  "test_iou_optimal": 0.745,
+  "test_precision": 0.8423,
+  "test_recall": 0.8657,
+  "test_mf1": 0.8425,
+  "paper_f1": 0.823,
+  "paper_iou": 0.727,
+  "delta_f1": 0.0308,
+  "per_fire": [
+    {
+      "id": "elephant_hill_fire",
+      "f1": 0.8059,
+      "iou": 0.6749
+    },
+    {
+      "id": "eagle_bluff_fire",
+      "f1": 0.8564,
+      "iou": 0.7489
+    },
+    {
+      "id": "double_creek_fire",
+      "f1": 0.8479,
+      "iou": 0.736
+    },
+    {
+      "id": "sparks_lake_fire",
+      "f1": 0.8528,
+      "iou": 0.7433
+    },
+    {
+      "id": "lytton_fire",
+      "f1": 0.7849,
+      "iou": 0.6459
+    },
+    {
+      "id": "chuckegg_creek_fire",
+      "f1": 0.8223,
+      "iou": 0.6982
+    },
+    {
+      "id": "swedish_fire",
+      "f1": 0.8576,
+      "iou": 0.7507
+    },
+    {
+      "id": "sydney_fire",
+      "f1": 0.8262,
+      "iou": 0.7039
+    },
+    {
+      "id": "thomas_fire",
+      "f1": 0.8632,
+      "iou": 0.7593
+    },
+    {
+      "id": "tubbs_fire",
+      "f1": 0.8517,
+      "iou": 0.7417
+    },
+    {
+      "id": "carr_fire",
+      "f1": 0.8717,
+      "iou": 0.7725
+    },
+    {
+      "id": "camp_fire",
+      "f1": 0.8548,
+      "iou": 0.7464
+    },
+    {
+      "id": "creek_fire",
+      "f1": 0.8778,
+      "iou": 0.7822
+    },
+    {
+      "id": "blue_ridge_fire",
+      "f1": 0.7686,
+      "iou": 0.6242
+    },
+    {
+      "id": "dixie_fire",
+      "f1": 0.8962,
+      "iou": 0.8119
+    }
+  ]
+}

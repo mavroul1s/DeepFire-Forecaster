@@ -1,4 +1,4 @@
-# Model checkpoints (exceed GitHub 100MB limit)
+# Model checkpoints
 *.pt
 *.pth
 *.h5
@@ -13,13 +13,6 @@
 # Python
 __pycache__/
 *.pyc
-
-# Generated outputs (plots, exports, reports)
-*.png
-*.jpg
-*.jpeg
-*.json
-*.pdf
 
 # LaTeX build artifacts
 *.aux

@@ -1,0 +1,17 @@
+{
+  "model": "SE-UNet3D-Pred-v6",
+  "ts": 2,
+  "n_channels": 27,
+  "params_M": 24.279561,
+  "best_val_f1": 0.46645645924137685,
+  "best_epoch": 47,
+  "threshold": 0.7500000000000001,
+  "test_f1": 0.42424003780122094,
+  "test_iou": 0.26922884701883537,
+  "paper_best_f1": 0.375,
+  "delta": 0.04924003780122094,
+  "pos_weight": 116.67294378479373,
+  "train_windows": 1280,
+  "val_windows": 167,
+  "test_windows": 642
+}
