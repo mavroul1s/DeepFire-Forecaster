@@ -14,7 +14,9 @@ pixels with finite values >= 7 are fire pixels.
 | Val | 13 | 12 | 1 (band 7 all-NaN) |
 | Test | 17 | 15 | 2 (calfcanyon_fire, mosquito_fire -- 2022 fires with no labels) |
 
-See `docs/AF_LABEL_AUDIT_REPORT.md` for the full per-fire breakdown.
+See `../docs/AF_LABEL_AUDIT_REPORT.md` for the full per-fire breakdown.
+
+---
 
 ## Architecture: SpaSE-UNet3D
 
@@ -28,20 +30,18 @@ satellite stacks where temporal depth is small (1-2 days).
   across days, which was found to hurt performance on short windows (TS=1,2). It also
   makes the architecture portable: a model trained at TS=1 and TS=2 share the same
   weight shapes.
-
 - Squeeze-and-Excitation (SE) attention after each encoder stage. Channels correspond
   to spectral bands; SE learns which bands are most informative per spatial context.
-
 - ASPP bottleneck with dilation rates [1, 6, 12]. Active fire perimeters range from
   a few pixels to thousands; multi-scale receptive fields handle this variation.
-
 - Deep supervision on all decoder outputs. Forces intermediate representations to be
   spatially meaningful, not just the final prediction head.
-
 - Dice + Focal loss. Focal loss handles class imbalance (fire pixels are rare);
   Dice loss directly optimizes F1.
 
 **Parameters:** 32.88M
+
+---
 
 ## Results
 
@@ -51,6 +51,67 @@ satellite stacks where temporal depth is small (1-2 days).
 | 2 | 0.825 | 0.702 | 0.855 | 0.746 | 0.848 | 0.861 | 0.823 | +3.2% |
 
 Optimal inference threshold: 0.20-0.22 (tuned on validation set).
+Test set: 15 verified fires (calfcanyon_fire and mosquito_fire excluded -- no labels).
+
+---
+
+## Training Curves
+
+**TS=1**
+
+![Training Curves TS1](af_1_day_input/train/results/plots/curves_v6.png)
+
+**TS=2**
+
+![Training Curves TS2](af_2_day_input/train/results/plots/curves_v6.png)
+
+---
+
+## Threshold Sweep (Validation)
+
+**TS=1**
+
+![Threshold Sweep TS1](af_1_day_input/train/results/plots/threshold_v6.png)
+
+**TS=2**
+
+![Threshold Sweep TS2](af_2_day_input/train/results/plots/threshold_v6.png)
+
+---
+
+## Test Set Results
+
+### Benchmark Comparison vs. Paper Baselines
+
+**TS=1**
+
+![Benchmark TS1](af_1_day_input/inf/results/plots/model_comparison_test.png)
+
+**TS=2**
+
+![Benchmark TS2](af_2_day_input/inf/results/plots/model_comparison_test.png)
+
+### Per-Fire F1
+
+**TS=1**
+
+![Per Fire F1 TS1](af_1_day_input/inf/results/plots/per_fire_f1.png)
+
+**TS=2**
+
+![Per Fire F1 TS2](af_2_day_input/inf/results/plots/per_fire_f1.png)
+
+### TP / FP / FN Overlays (all 15 test fires)
+
+**TS=1**
+
+![All Fires TS1](af_1_day_input/inf/results/plots/all_fires_tpfpfn.png)
+
+**TS=2**
+
+![All Fires TS2](af_2_day_input/inf/results/plots/all_fires_tpfpfn.png)
+
+---
 
 ## Training Details
 
@@ -66,13 +127,65 @@ Optimal inference threshold: 0.20-0.22 (tuned on validation set).
 | Training time (TS=1) | ~4.2h |
 | Training time (TS=2) | ~6.5h |
 
+---
+
+## Folder Structure
+
+```
+active_fire/
+|-- README.md
+|-- diagnostics/
+|   |-- diag_train_val_af.ipynb   # label audit for train + val splits
+|   |-- diag_test_af.ipynb        # label audit for test split
+|-- af_1_day_input/
+|   |-- train/
+|   |   |-- af_1_dy_input_train.ipynb
+|   |   |-- results/
+|   |       |-- history_v6.csv
+|   |       |-- results_v6.json
+|   |       |-- plots/
+|   |           |-- curves_v6.png
+|   |           |-- comparison_v6.png
+|   |           |-- threshold_v6.png
+|   |-- inf/
+|       |-- af_1_day_input_inf.ipynb
+|       |-- results/
+|           |-- per_fire_test_results.csv
+|           |-- test_results.json
+|           |-- plots/
+|               |-- all_fires_tpfpfn.png
+|               |-- model_comparison_test.png
+|               |-- per_fire_f1.png
+|               |-- test_threshold_sweep.png
+|-- af_2_day_input/
+    |-- train/
+    |   |-- af_2day_input__train.ipynb
+    |   |-- results/
+    |       |-- history_v6.csv
+    |       |-- results_v6.json
+    |       |-- plots/
+    |           |-- curves_v6.png
+    |           |-- comparison_v6.png
+    |           |-- threshold_v6.png
+    |-- inf/
+        |-- af_2_day_input_inf.ipynb
+        |-- results/
+            |-- per_fire_test_results.csv
+            |-- test_results.json
+            |-- plots/
+                |-- all_fires_tpfpfn.png
+                |-- model_comparison_test.png
+                |-- per_fire_f1.png
+                |-- test_threshold_sweep.png
+```
+
 ## Notebooks
 
 | Notebook | Purpose |
 |----------|---------|
-| `diagnostics/diag_train_val_af.ipynb` | Label completeness audit for train+val splits |
+| `diagnostics/diag_train_val_af.ipynb` | Label completeness audit for train + val splits |
 | `diagnostics/diag_test_af.ipynb` | Label completeness audit for test split |
-| `training/af_ts1_train.ipynb` | Full training run, TS=1 |
-| `training/af_ts2_train.ipynb` | Full training run, TS=2 |
-| `inference/af_ts1_inf.ipynb` | Test evaluation, threshold sweep, TP/FP/FN overlays, TS=1 |
-| `inference/af_ts2_inf.ipynb` | Test evaluation, threshold sweep, TP/FP/FN overlays, TS=2 |
+| `af_1_day_input/train/af_1_dy_input_train.ipynb` | Full training run, TS=1 |
+| `af_1_day_input/inf/af_1_day_input_inf.ipynb` | Test evaluation + threshold sweep + overlays, TS=1 |
+| `af_2_day_input/train/af_2day_input__train.ipynb` | Full training run, TS=2 |
+| `af_2_day_input/inf/af_2_day_input_inf.ipynb` | Test evaluation + threshold sweep + overlays, TS=2 |
