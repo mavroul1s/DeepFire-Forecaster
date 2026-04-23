@@ -18,28 +18,98 @@ See `../docs/AF_LABEL_AUDIT_REPORT.md` for the full per-fire breakdown.
 
 ---
 
-## Architecture: SpaSE-UNet3D
+## Architecture: SpaSE-UNet3D (AF variant)
 
-SpaSE-UNet3D (Spatial Squeeze-and-Excitation 3D UNet) is a 3D UNet with
-spatial-only convolutions and SE channel attention, designed for temporal
-satellite stacks where temporal depth is small (1-2 days).
+SpaSE-UNet3D (Spatial Squeeze-and-Excitation 3D UNet) is a 3D encoder-decoder
+with spatial-only convolutions and SE channel attention.
 
-**Key design choices:**
-
-- Spatial-only (1,3,3) convolutions in every ResBlock. This avoids temporal mixing
-  across days, which was found to hurt performance on short windows (TS=1,2). It also
-  makes the architecture portable: a model trained at TS=1 and TS=2 share the same
-  weight shapes.
-- Squeeze-and-Excitation (SE) attention after each encoder stage. Channels correspond
-  to spectral bands; SE learns which bands are most informative per spatial context.
-- ASPP bottleneck with dilation rates [1, 6, 12]. Active fire perimeters range from
-  a few pixels to thousands; multi-scale receptive fields handle this variation.
-- Deep supervision on all decoder outputs. Forces intermediate representations to be
-  spatially meaningful, not just the final prediction head.
-- Dice + Focal loss. Focal loss handles class imbalance (fire pixels are rare);
-  Dice loss directly optimizes F1.
-
+**Input:** 8 channels — 6 VIIRS Day bands + 2 VIIRS Night bands.
 **Parameters:** 32.88M
+
+### ResBlock3D
+
+The core building block. Each block applies two spatial-only convolutions,
+Dropout3D between them, SE channel attention after the second conv,
+and a residual skip connection with BN projection when channel dimensions change.
+
+```
+Conv3d(ic, oc, kernel=(1,3,3))  ->  BN  ->  ReLU
+Dropout3D(p=0.1)
+Conv3d(oc, oc, kernel=(1,3,3))  ->  BN
+SEBlock3D(oc)
++ skip (Conv3d(ic,oc,1) + BN if ic != oc, else Identity)
+ReLU
+```
+
+Activation: **ReLU** throughout.
+Dropout: **Dropout3D(p=0.1)** applied between the two convolutions in every ResBlock.
+
+### Encoder
+
+Four stages with spatial MaxPool3D(1,2,2) for downsampling between stages.
+Only the spatial dimensions are pooled — the temporal dimension is preserved.
+
+```
+Input [B, 8, T, H, W]
+  -> ResBlock3D(8,   64)   + MaxPool3D(1,2,2)
+  -> ResBlock3D(64,  128)  + MaxPool3D(1,2,2)
+  -> ResBlock3D(128, 256)  + MaxPool3D(1,2,2)
+  -> ResBlock3D(256, 512)  + MaxPool3D(1,2,2)
+```
+
+### Bottleneck
+
+A plain ResBlock3D that doubles the channel dimension: 512 → 1024.
+No ASPP in the AF variant — the bottleneck is a single residual block.
+
+### Decoder
+
+Symmetric upsampling with ConvTranspose3D(1,2,2) + skip connections from the encoder.
+Each decoder stage is a ResBlock3D on the concatenated (upsampled + skip) features.
+
+```
+  -> ConvTranspose3D(1024, 512) + cat(enc4 skip) -> ResBlock3D(1024, 512)
+  -> ConvTranspose3D(512,  256) + cat(enc3 skip) -> ResBlock3D(512,  256)
+  -> ConvTranspose3D(256,  128) + cat(enc2 skip) -> ResBlock3D(256,  128)
+  -> ConvTranspose3D(128,  64)  + cat(enc1 skip) -> ResBlock3D(128,  64)
+```
+
+### Deep Supervision
+
+Auxiliary segmentation heads are attached to intermediate decoder outputs.
+The total loss combines the main head loss and the auxiliary losses
+with DS_WEIGHT=0.3. This forces intermediate feature maps to maintain
+spatial specificity and regularizes training on the small dataset.
+
+### Loss Function
+
+```
+Loss = 0.5 * Dice + 0.5 * Focal(alpha=0.75, gamma=2.0)
+```
+
+Focal loss handles the severe class imbalance (fire pixels are rare).
+Dice loss directly optimizes the F1 metric.
+
+### Training
+
+| Hyperparameter | Value |
+|---------------|-------|
+| Input channels | 8 |
+| Encoder channels | [64, 128, 256, 512] |
+| Bottleneck | ResBlock3D 512→1024 |
+| Activation | ReLU |
+| Dropout | Dropout3D(p=0.1) |
+| Deep supervision | Yes (weight=0.3) |
+| Loss | Dice(0.5) + Focal(0.5) |
+| Batch size | 8 |
+| Optimizer | AdamW |
+| LR schedule | OneCycleLR |
+| Epochs (TS=1) | 100 |
+| Epochs (TS=2) | 80 |
+| Patch size | 256x256 |
+| GPU | Kaggle T4 |
+| Training time (TS=1) | ~4.2h |
+| Training time (TS=2) | ~6.5h |
 
 ---
 
@@ -51,7 +121,7 @@ satellite stacks where temporal depth is small (1-2 days).
 | 2 | 0.825 | 0.702 | 0.855 | 0.746 | 0.848 | 0.861 | 0.823 | +3.2% |
 
 Optimal inference threshold: 0.20-0.22 (tuned on validation set).
-Test set: 15 verified fires (calfcanyon_fire and mosquito_fire excluded -- no labels).
+Test set: 15 verified fires (calfcanyon_fire and mosquito_fire excluded).
 
 ---
 
@@ -110,22 +180,6 @@ Test set: 15 verified fires (calfcanyon_fire and mosquito_fire excluded -- no la
 **TS=2**
 
 ![All Fires TS2](af_2_day_input/inf/results/plots/all_fires_tpfpfn.png)
-
----
-
-## Training Details
-
-| Hyperparameter | Value |
-|---------------|-------|
-| Patch size | 256x256 |
-| Batch size | 8 |
-| Optimizer | AdamW |
-| LR schedule | OneCycleLR |
-| Epochs (TS=1) | 100 |
-| Epochs (TS=2) | 80 |
-| GPU | Kaggle T4 |
-| Training time (TS=1) | ~4.2h |
-| Training time (TS=2) | ~6.5h |
 
 ---
 
