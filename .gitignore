@@ -32,4 +32,4 @@ Thumbs.db
 
 # Paper folder: track only the compiled PDF
 paper/*
-#!paper/main.pdf
+!paper/main.pdf
