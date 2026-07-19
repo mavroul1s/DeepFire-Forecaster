@@ -2,7 +2,7 @@
 *.pt
 *.pth
 *.h5
-
+*.zip
 # Large binary data
 *.npz
 *.npy
