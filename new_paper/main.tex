@@ -27,21 +27,30 @@
 \newcommand{\rev}[1]{\textcolor{blue}{#1}}
 
 % =====================================================================
-% SEED-COUNT AND RESULT PLACEHOLDERS
-% Update these five lines once the remaining runs finish; every
-% occurrence in the manuscript updates automatically.
-% Evidenced values as of now, if the runs do not complete:
-%   \nseedAF{2}  \nseedFP{3}
+% RESULT PLACEHOLDERS -- update these lines once the remaining runs
+% finish; every occurrence in the manuscript updates automatically.
+% Evidenced values if the additional runs do not complete:
+%   \nseedAF{two}  \nseedFP{three}
 %   \afTStwo{$0.8549 \pm 0.0005$}   \afTSone{$0.8520$}
-%   \fpAll{$0.3843 \pm 0.0392$}
+%   \afIoUtwo{$0.7466 \pm 0.0007$}  \afIoUone{$0.7422$}
+%   \fpAll{$0.3843 \pm 0.0392$}     \fpIoUall{$0.2383 \pm 0.0297$}
+%   \fpEighteen{$0.3879 \pm 0.0389$} \fpIoUeighteen{$0.2411 \pm 0.0296$}
+%   \fpSixteen{$0.4036 \pm 0.0414$}  \fpIoUsixteen{$0.2533 \pm 0.0321$}
+%   \fpSD{0.039}
 % =====================================================================
 \newcommand{\nseedAF}{\textcolor{red}{[N]}}
 \newcommand{\nseedFP}{\textcolor{red}{[N]}}
 \newcommand{\afTStwo}{\textcolor{red}{[F1$\pm$SD]}}
 \newcommand{\afTSone}{\textcolor{red}{[F1$\pm$SD]}}
+\newcommand{\afIoUtwo}{\textcolor{red}{[IoU$\pm$SD]}}
+\newcommand{\afIoUone}{\textcolor{red}{[IoU$\pm$SD]}}
 \newcommand{\fpAll}{\textcolor{red}{[F1$\pm$SD]}}
-\newcommand{\afIoU}{\textcolor{red}{[IoU$\pm$SD]}}
-\newcommand{\fpIoU}{\textcolor{red}{[IoU$\pm$SD]}}
+\newcommand{\fpIoUall}{\textcolor{red}{[IoU$\pm$SD]}}
+\newcommand{\fpEighteen}{\textcolor{red}{[F1$\pm$SD]}}
+\newcommand{\fpIoUeighteen}{\textcolor{red}{[IoU$\pm$SD]}}
+\newcommand{\fpSixteen}{\textcolor{red}{[F1$\pm$SD]}}
+\newcommand{\fpIoUsixteen}{\textcolor{red}{[IoU$\pm$SD]}}
+\newcommand{\fpSD}{\textcolor{red}{[SD]}}
 \usepackage{multirow}
 \usepackage{subcaption}
 \usepackage{float}
@@ -85,7 +94,8 @@ be scored by any model. We further show that the reference evaluation of this
 benchmark differs from an independently implemented one in eight respects, and
 that these differences move F1 by up to 0.10 on fixed model weights---several
 times the spread separating the published baselines from one another. Published
-figures are therefore not directly comparable to independently computed values.}
+figures are therefore not directly comparable to independently computed values,
+and we make no state-of-the-art claim.}
 We also document the BA label encoding in the released GeoTIFFs---a 
 prerequisite for downstream modelling; \rev{the BA task is used for auditing
 only and no BA model is trained.} Second, we propose
@@ -98,11 +108,11 @@ paper, SpaSE-UNet3D reaches F1\,=\,\fpAll{} on fire progression over
 the full 24-fire test set, and F1\,=\,\afTStwo{} on active fire
 detection, in both cases from two-day observation windows where the published
 baselines use six. On active fire, a single-day input reaches
-F1\,=\,\afTSone{}---within 0.003 of the two-day result---indicating that one VIIRS
-acquisition already carries most of the detectable signal, which matters
-operationally for early detection, before a second overpass is available. The
-two variants use 24.3\,M and 32.9\,M parameters and train in under 12 hours on
-a single GPU.} Code and
+F1\,=\,\afTSone{}, close enough to the two-day result that we treat the two as
+substantially equivalent, indicating that one VIIRS acquisition already carries
+most of the detectable signal---which matters operationally for early detection,
+before a second overpass is available. The two variants use 24.3\,M and
+32.9\,M parameters and train in under 15 hours on a single GPU.} Code and
 results are publicly available.}
 
 \keyword{wildfire detection; VIIRS; active fire; fire progression; 3D U-Net; squeeze-and-excitation; remote sensing; deep learning; satellite imagery; label quality audit}
@@ -156,12 +166,12 @@ nighttime thermal  bands — a design motivated by the
 demonstrated value of combining daytime optical sensor observations
 with nighttime thermal infrared  data for round-the-clock
 fire tracking~\cite{chiang2019mapping}. The dataset paper reports
-results for 11 baselines ranging from 2D U-Nets~\cite{ronneberger2015unet}
+results for \rev{12} baselines ranging from 2D U-Nets~\cite{ronneberger2015unet}
 to 3D transformer variants~\cite{hatamizadeh2022swin,hatamizadeh2022unetr},
 using sensor temporal stacks of up to TS\,=\,6 days. The strongest
 published AF baseline is SwinUNETR-3D at TS\,=\,2 with F1\,=\,0.823;
 the strongest published FP baseline is U-Net-3D at TS\,=\,6 with
-F1\,=\,0.374.
+F1\,=\,\rev{0.375}.
 
 \rev{The benchmark has been used to rank eleven architectures against one
 another, but neither the completeness of its labels nor the evaluation
@@ -172,15 +182,14 @@ of the benchmark's evaluation protocol and label quality; the secondary
 contribution is an architecture, presented on efficiency grounds.}
 
 In this work we revisit TS-SatFire with two goals. The first is to
-examine the sensor data itself. We observe during initial experiments
-that recall is systematically capped at approximately 0.80 for models
-that otherwise perform well, which is inconsistent with the near-equal
-precision values. A systematic audit of every fire in every split
-reveals a substantial number of fires with entirely missing 
-labels, across all three tasks; training on unaudited data
-therefore incurs a penalty that is fully attributable to the data and
-not to the model. The audit findings are themselves a standalone
-contribution and are required for any future work on this benchmark.
+examine the sensor data itself. \rev{A systematic audit of every fire in every
+split reveals a substantial number of fires with entirely missing labels across
+all three tasks, including two of the seventeen active-fire test fires. Fires
+that carry no annotation cannot be scored, so any test aggregate over the full
+split is determined for those fires by the convention adopted for empty ground
+truth rather than by model behaviour. We document the exclusion lists, the
+undocumented burned-area label encoding, and the effect of filtering at fire and
+day level, and we measure rather than assert the consequence for accuracy.}
 
 The second goal is architectural. The TS-SatFire sensor input is
 very short: operational constraints and paper conventions favour
@@ -196,8 +205,7 @@ and \rev{our design tests this intuition at its limit} by removing temporal
 mixing inside the residual blocks entirely. We propose SpaSE-UNet3D,
 a spatial Squeeze-and-Excitation 3D UNet that explicitly uses
 $(1,3,3)$ convolutions in every residual block, so that the temporal
-dimension is preserved and \rev{is never mixed by any convolution in the
-network}. The block
+dimension is preserved but never mixed across days. The block
 further uses SE~\cite{hu2018squeeze} channel attention to reweight
 the VIIRS multispectral sensor bands per spatial context.
 Task-specific variants add an ASPP~\cite{chen2017rethinking,chen2018encoder}
@@ -206,8 +214,8 @@ fire progression.
 
 \rev{We evaluate SpaSE-UNet3D on both the AF and FP tasks under the
 evaluation protocol defined in Section~\ref{sec:experiments}. On AF it reaches
-F1\,=\,$0.8549 \pm 0.0005$ at TS\,=\,2 on the 15 annotated test fires, and
-on FP F1\,=\,$0.3843 \pm 0.0392$ at TS\,=\,2 over the full 24-fire test set,
+F1\,=\,\afTStwo{} at TS\,=\,2 on the 15 annotated test fires, and
+on FP F1\,=\,\fpAll{} at TS\,=\,2 over the full 24-fire test set,
 in both cases using two-day observation windows where the published baselines
 use six, and training in under 12 hours on a single NVIDIA~T4 accelerator. We
 do not present these figures as improvements over the published baselines:
@@ -242,13 +250,13 @@ Section~\ref{sec:conclusion} concludes.
 \label{sec:related}
 %%=============================================================
 
-\paragraph*{Wildfire remote sensing with deep learning.} Early work on active fire detection from satellite imagery used per-pixel thresholds on thermal bands, typically VIIRS band I4 or the MODIS analogue~\cite{giglio2016collection,schroeder2014new}. Deep learning approaches in the last five years have moved to segmentation networks operating on multi-band VIIRS or Sentinel-2 stacks~\cite{pinto2020deep}, and more recently to 3D and transformer architectures that incorporate temporal context~\cite{moskolai2021application}. Huot et~al.~\cite{huot2022next} released the Next Day Wildfire Spread benchmark, with a related but coarser problem formulation than TS-SatFire. Zhao and Ban~\cite{zhao2025tssatfire} provide the most comprehensive comparison to date, benchmarking 12 architectures spanning U-Net~\cite{ronneberger2015unet}, Attention U-Net~\cite{oktay2018attention}, UNETR~\cite{hatamizadeh2022unetr}, SwinUNETR~\cite{hatamizadeh2022swin}, and recurrent encoders on a unified TS-SatFire benchmark. Their results motivate our comparisons throughout.
+\paragraph*{Wildfire remote sensing with deep learning.} Early work on active fire detection from satellite imagery used per-pixel thresholds on thermal bands, typically VIIRS band I4 or the MODIS analogue~\cite{giglio2016collection,schroeder2014new}. Deep learning approaches in the last five years have moved to segmentation networks operating on multi-band VIIRS or Sentinel-2 stacks~\cite{pinto2020deep}, and more recently to 3D and transformer architectures that incorporate temporal context~\cite{moskolai2021application}. Huot et~al.~\cite{huot2022next} released the Next Day Wildfire Spread benchmark, with a related but coarser problem formulation than TS-SatFire. Zhao and Ban~\cite{zhao2025tssatfire} provide the most comprehensive comparison to date, benchmarking 12 architectures spanning U-Net~\cite{ronneberger2015unet}, Attention U-Net~\cite{oktay2018attention}, UNETR~\cite{hatamizadeh2022unetr}, SwinUNETR~\cite{hatamizadeh2022swin}, and recurrent encoders on a unified TS-SatFire benchmark. \rev{Their reported figures are the reference point for this paper, and Section~\ref{sec:protocol} examines the evaluation procedure that produced them.}
 
-\paragraph*{Factorised spatiotemporal convolutions.} Tran et~al.~\cite{tran2018closer} and Qiu et~al.~\cite{qiu2017learning} showed that factorising 3D convolutions into separate spatial $(1, k, k)$ and temporal $(k, 1, 1)$ stages outperforms full $(k, k, k)$ kernels in video classification, with fewer parameters. SpaSE-UNet3D extends this principle to its extreme on short ($T \leq 2$) windows by retaining only the spatial component, supported by our ablations.
+\paragraph*{Factorised spatiotemporal convolutions.} Tran et~al.~\cite{tran2018closer} and Qiu et~al.~\cite{qiu2017learning} showed that factorising 3D convolutions into separate spatial $(1, k, k)$ and temporal $(k, 1, 1)$ stages outperforms full $(k, k, k)$ kernels in video classification, with fewer parameters. SpaSE-UNet3D extends this principle to its extreme on short ($T \leq 2$) windows by retaining only the spatial component. \rev{Our ablation (Section~\ref{sec:ablation}) supports the parameter-efficiency half of this claim; it does not resolve an accuracy difference.}
 
 \paragraph*{Attention in U-Nets.} Squeeze-and-Excitation~\cite{hu2018squeeze} adds a lightweight channel-wise attention module that globally pools feature maps and produces per-channel gating weights. Roy et~al.~\cite{roy2018concurrent} extended this with concurrent spatial-channel SE for 2D semantic segmentation. Atrous Spatial Pyramid Pooling~\cite{chen2017rethinking}, later refined in DeepLabv3+~\cite{chen2018encoder}, aggregates multi-scale context via parallel dilated convolutions in the bottleneck. Both modules are standard in semantic segmentation, but their combination with spatial-only 3D convolutions for temporal-satellite tasks is, to our knowledge, new.
 
-\paragraph*{Data quality in remote-sensing benchmarks.} Prior work has documented label noise in land-cover benchmarks~\cite{pelletier2017assessing} and machine-learning test sets more broadly~\cite{northcutt2021pervasive}, and shown that careful audit procedures can close a substantial fraction of reported model gaps. Our audit of TS-SatFire is in this tradition and, we argue, a necessary precursor to fair model comparison on the benchmark.
+\paragraph*{Data quality in remote-sensing benchmarks.} Prior work has documented label noise in land-cover benchmarks~\cite{pelletier2017assessing} and machine-learning test sets more broadly~\cite{northcutt2021pervasive}, showing that erroneous test labels can reorder benchmark rankings even when the underlying models are unchanged. \rev{Moreno-Ruiz et~al.~\cite{morenoruiz2020modis} document omission and commission errors in the MODIS burned-area products from which TS-SatFire's burned-area labels are partly derived, so label error in this benchmark is inherited as well as introduced. Our audit is in this tradition, and extends it in one respect: we find that the evaluation procedure, not only the labels, determines the reported ordering.}
 
 \paragraph*{Sensor systems for wildfire monitoring in \emph{Sensors}.}
 A body of work published in the MDPI \emph{Sensors} journal is
@@ -261,7 +269,7 @@ sits.
 Chiang and Ulloa~\cite{chiang2019mapping} demonstrate that combining
 the Sentinel-3 SLSTR optical/thermal instruments with the VIIRS day-night
 band (VIIRS-DNB) enables round-the-clock fire tracking, motivating
-TS-SatFire's inclusion of both daytime and nighttime VIIRS chanels
+TS-SatFire's inclusion of both daytime and nighttime VIIRS
 channels as model inputs.
 For burned area assessment, Moreno-Ruiz et~al.~\cite{morenoruiz2020modis}
 audit the omission and commission errors of MODIS-derived BA
@@ -317,11 +325,45 @@ fires identified by geographic codes such as \texttt{US\_2021\_CA345171201312021
 \label{sec:audit}
 %%=============================================================
 
-We audit every fire in every split of every task for label completeness. For each fire we read the VIIRS\_Day GeoTIFF for every available day and check whether the relevant label band contains any finite pixels. A fire with zero finite label pixels across its entire temporal extent is considered unusable.
+We audit every fire in every split of every task for label completeness. \rev{Missing labels occur at two distinct granularities, and conflating them discards usable data: some fires carry no annotation on any day of their temporal extent, while others are annotated on a subset of days only. We therefore audit and filter at both levels. For each fire we read the VIIRS\_Day GeoTIFF for every available day and test whether the relevant label band contains any finite pixel. A fire with zero finite label pixels across its entire temporal extent carries no supervision and is excluded; a fire annotated on some days is retained, and individual unlabelled windows are rejected instead.}
 
 \subsection{AF Audit}
 
-Table~\ref{tab:af_audit} summarises the AF audit. 21 training fires and 1 validation fire are excluded from AF training: 14 have no \texttt{VIIRS\_Day} directory, 4 have band~7 entirely NaN across all days, and 3 have fewer than 50\% of days with usable labels. The 2 excluded test fires are \textit{Calf~Canyon} and \textit{Mosquito}. The two test fires, \textit{Calf~Canyon} and \textit{Mosquito}, are 2022 events: AF ground truth was never included for these scenes in the released data. The 21 excluded training fires are a mix of 2019 and 2020 events. Training on the unaudited data caps recall at approximately 0.80 because the model receives negative-only examples for those fires and learns to suppress activations in similar scenes. After exclusion, recall rises to 0.86.
+\rev{Table~\ref{tab:af_audit} summarises the AF audit.}
+
+\rev{\textit{Fire level.} Of the 138 fires in the AF training pool, 18 have band~7
+entirely NaN across every available day and are excluded; one validation fire
+(\texttt{22712904}) and two test fires fail the same test. The two test fires are
+\textit{Calf~Canyon} and \textit{Mosquito}, both 2022 events for which
+active-fire ground truth was never included in the released data. They cannot be
+scored by any model, and any aggregate reported over the full 17-fire test set
+therefore depends for those fires on the convention adopted for empty ground
+truth rather than on model behaviour (Section~\ref{sec:protocol}). The audited
+splits contain 120 training, 12 validation and 15 test fires.}
+
+\rev{\textit{Day level.} Excluding a fire outright because part of its temporal
+extent is unlabelled discards usable supervision. We instead retain partially
+annotated fires and reject individual windows: a window is admitted only if
+band~7 on its final day---the day to which the AF label refers---contains at
+least one finite pixel. Applied to the audited fire lists this rejects 143
+training windows, leaving 1{,}719 training windows at TS = 2, each supervised by
+a verified label.}
+
+\rev{Without the fire-level exclusion, windows drawn from unannotated fires
+enter training with an all-negative target, since a NaN band read through the
+reference loader's \texttt{nan\_to\_num} conversion becomes a valid all-zero
+mask. The model is then supervised to suppress activations on scenes that do
+contain fire. Section~\ref{sec:auditeffect} measures the size of this effect
+under our pipeline.}
+
+\rev{\textit{Sensitivity to the criterion.} The fire-level criterion above is
+the weakest defensible one: a fire is removed only when it carries no
+supervision at all. A stricter alternative removes any fire whose labelled days
+fall below a fixed fraction of its temporal extent; at a 50\% cut-off, three
+further fires are removed, leaving 117. We adopt the weaker criterion because
+day-level filtering already guarantees that every training window is verified,
+making fire-level removal of partially labelled fires unnecessary and wasteful
+of supervision.}
 
 \subsection{BA Audit}
 
@@ -331,13 +373,21 @@ In addition to the missing-label audit, we also document the practical encoding 
 
 \subsection{FP Audit}
 
-Table~\ref{tab:fp_audit} summarises the FP audit. The FP audit is more subtle because FP labels are derived at the window level from consecutive BA masks. A fire is excluded if no usable window can be constructed, i.e., if it has zero consecutive (day $T$, day $T+1$) pairs in which both days have valid BA. 48 training fires and 6 validation fires fail this test. For the test set we also exclude eight 2021 fires whose burned-area fraction inside the $256 \times 256$ crop is below $0.001\%$; these fires produce F1 = 0 regardless of model quality because the crop contains essentially no positive pixels, and including them in the aggregate skews the reported F1 downward in a way that does not reflect model capability.
+Table~\ref{tab:fp_audit} summarises the FP audit. The FP audit is more subtle because FP labels are derived at the window level from consecutive BA masks. A fire is excluded if no usable window can be constructed, i.e., if it has zero consecutive (day $T$, day $T+1$) pairs in which both days have valid BA. 48 training fires and 6 validation fires fail this test. \rev{The submitted
+version of this paper additionally excluded eight fires from the test set, on a
+stated criterion of burned-area fraction below $0.001\%$ inside the
+$256 \times 256$ crop. That criterion does not describe what was done: three of
+the eight exceed it, and the boundary is not monotone in the quantity it names.
+We therefore remove the test-set exclusion entirely and report all 24 test fires
+throughout. Six of the excluded fires do carry no usable window and contribute
+no counts under micro-averaging; the remaining two are scored normally.}
 
 All exclusion lists are reported in full in the supplementary audit reports released with the repository.
 
 \begin{table}[h]
 \centering
-\caption{Active Fire label audit.}
+\caption{Active Fire label audit. \rev{Fire-level exclusions only; a further
+143 training windows are rejected at day level.}}
 \label{tab:af_audit}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{@{}lrrr@{}}
@@ -349,7 +399,7 @@ All exclusion lists are reported in full in the supplementary audit reports rele
 \color{white}\textbf{Usable} &
 \color{white}\textbf{Excluded} \\
 \midrule
-\rowcolor{rowA} Train & 138 & 117 & 21 \\
+\rowcolor{rowA} Train & 138 & \rev{120} & \rev{18} \\
 \rowcolor{white} Val   & 13  & 12  & 1  \\
 \rowcolor{rowA}  Test  & 17  & 15  & 2 (Calf~Canyon, Mosquito) \\
 \arrayrulecolor{hdrblue}\bottomrule
@@ -379,7 +429,9 @@ All exclusion lists are reported in full in the supplementary audit reports rele
 
 \begin{table}[H]
 \centering
-\caption{Fire Progression label audit.}
+\caption{Fire Progression label audit. \rev{All 24 test fires are reported in
+Section~\ref{sec:experiments}; the six without a usable window contribute no
+counts under micro-averaging.}}
 \label{tab:fp_audit}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{@{}lrrr@{}}
@@ -393,7 +445,7 @@ All exclusion lists are reported in full in the supplementary audit reports rele
 \midrule
 \rowcolor{rowA} Train & 137 & 89 & 48 \\
 \rowcolor{white} Val   & 14 (Kaggle) & 8  & 6 (no usable window) \\
-\rowcolor{rowA}  Test  & 24 US\_2021 & 16 & 8 (burn fraction $< 0.001\%$) \\
+\rowcolor{rowA}  Test  & 24 US\_2021 & \rev{18} & \rev{6 (no usable window)} \\
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
@@ -405,15 +457,11 @@ All exclusion lists are reported in full in the supplementary audit reports rele
 \label{sec:method}
 %%=============================================================
 
-SpaSE-UNet3D is a family of two closely related encoder--decoder architectures, one for AF detection and one for FP prediction. Both variants share four design principles: (i) spatial-only $(1,3,3)$ convolutions \rev{in every residual block}, (ii) SE channel attention~\cite{hu2018squeeze} inside every residual block, (iii) a symmetric encoder/decoder with skip concatenations as in U-Net~\cite{ronneberger2015unet,cciccek20163d}, and (iv) a combined Dice + Focal loss~\cite{milletari2016v,lin2017focal}. Task-specific variations handle the different input dimensionality, label density, and temporal-context budget of AF and FP. Fig.~\ref{fig:resblock} shows the shared residual block side-by-side; Figs.~\ref{fig:af_arch} and~\ref{fig:fp_arch} show the AF and FP variants respectively.
+SpaSE-UNet3D is a family of two closely related encoder--decoder architectures, one for AF detection and one for FP prediction. Both variants share four design principles: (i) spatial-only $(1,3,3)$ convolutions, (ii) SE channel attention~\cite{hu2018squeeze} inside every residual block, (iii) a symmetric encoder/decoder with skip concatenations as in U-Net~\cite{ronneberger2015unet,cciccek20163d}, and (iv) a combined Dice + Focal loss~\cite{milletari2016v,lin2017focal}. Task-specific variations handle the different input dimensionality, label density, and temporal-context budget of AF and FP. Fig.~\ref{fig:resblock} shows the shared residual block side-by-side; Figs.~\ref{fig:af_arch} and~\ref{fig:fp_arch} show the AF and FP variants respectively.
 
 \subsection{Shared Building Blocks}
 
-\paragraph*{Spatial-only convolutions.} \rev{Every feature-extraction convolution in the encoder and decoder residual blocks has kernel shape $(1, 3, 3)$ with padding $(0, 1, 1)$, so that no convolution in the network combines information across days. Other operations in the network are not $(1,3,3)$ convolutions: the residual skip paths use $1 \times 1 \times 1$ projections, the decoder upsamples with $\mathrm{ConvTranspose3D}(1, 2, 2)$, the FP variant adds a $27 \rightarrow 64$ input projection and an ASPP module with dilated branches, and the FP output head is two-dimensional. All of these are likewise spatial: none mixes across the temporal axis.
-
-The temporal dimension $T$ is therefore preserved through every encoder and decoder stage, and is never mixed \emph{by convolution}. It is not, however, preserved end to end. Two operations aggregate over $T$: the SE modules pool globally over $(T, H, W)$ when computing channel gates, and the FP head collapses $T$ by a mean before its final $2$D convolutions. The design claim is therefore specific---temporal information is combined only by global pooling, never by learned temporal filters---and we state it in that form rather than as an absence of temporal mixing altogether.}
-
-For the short temporal windows used here ($T \in \{1, 2\}$ for AF, $T = 2$ for FP), \rev{our expectation was that learned temporal filters would add parameters without adding signal. Section~\ref{sec:experiments} reports the ablation that tests this: full $(3,3,3)$ kernels neither help nor hurt validation F1 by a resolvable margin, but cost $2.72\times$ the parameters.}
+\paragraph*{Spatial-only convolutions.} Every convolution in the encoder and decoder stages has kernel shape $(1, 3, 3)$ with padding $(0, 1, 1)$. The temporal dimension $T$ is therefore preserved through all encoder/decoder stages and never mixed. For the short temporal windows used here ($T \in \{1, 2\}$ for AF, $T = 2$ for FP), temporal mixing adds parameters without providing signal; our internal ablations confirmed that full $(3,3,3)$ kernels hurt validation F1 on TS = 2.
 
 \paragraph*{SE channel attention.} After the second convolution in every residual block, features pass through a $\mathrm{SEBlock3D}$ module with reduction ratio $r = 8$. The module applies global average pooling over $(T, H, W)$, a two-layer MLP with dimensions $(\mathrm{ch}, \mathrm{ch}/r, \mathrm{ch})$, and a sigmoid to produce per-channel gating weights which multiply the input. This lets the network learn which VIIRS spectral bands or auxiliary features are informative per spatial context.
 
@@ -451,7 +499,7 @@ The Dice term directly optimises the F1 surrogate; the Focal term handles the he
 
 \subsection{FP Variant}
 
-The FP variant takes a 27-channel input: the 8 VIIRS bands, 18 FirePred auxiliary bands (band 3 is excluded because it is all zeros in our probe fire), and 1 cumulative burned-area mask computed from all days up to $T$. The encoder follows the same four-stage schedule $[64, 128, 256, 512]$, but is preceded by a dedicated input-projection layer $\mathrm{Conv3d}(27, 64, (1, 3, 3)) \to \mathrm{BN} \to \mathrm{GELU}$ that mixes the heterogeneous input channels before the first encoder block. The full architecture is shown in Fig.~\ref{fig:fp_arch}.
+The FP variant takes a 27-channel input: the 8 VIIRS bands, 18 FirePred auxiliary bands \rev{(band 3 is excluded: it is identically zero in the fire used to probe the band layout, and we retain the exclusion for consistency across runs)}, and 1 cumulative burned-area mask computed from all days up to $T$. The encoder follows the same four-stage schedule $[64, 128, 256, 512]$, but is preceded by a dedicated input-projection layer $\mathrm{Conv3d}(27, 64, (1, 3, 3)) \to \mathrm{BN} \to \mathrm{GELU}$ that mixes the heterogeneous input channels before the first encoder block. The full architecture is shown in Fig.~\ref{fig:fp_arch}.
 
 \paragraph*{ResBlock3D (FP).} The FP residual block (Fig.~\ref{fig:resblock}, right) differs from the AF block in two ways. First, GELU~\cite{hendrycks2016gaussian} replaces ReLU as the activation; empirically we found that the sparser loss landscape of the FP objective benefits from the smoother gradient of GELU. Second, there is no Dropout3D~\cite{srivastava2014dropout} inside the block: on the much smaller effective FP training set (89 fires, with sparse window-level positives), Dropout hurt convergence. The skip connection also drops the BatchNorm on the projection to keep the residual path closer to identity.
 
@@ -471,9 +519,9 @@ The four branch outputs (each $341$ channels) are concatenated (for $4 \times 34
 \paragraph*{Loss.} The FP training objective extends the AF loss with a weighted binary-cross-entropy term:
 \begin{align}
 \mathcal{L}_{\mathrm{FP}} =\ & 0.5\, \mathcal{L}_{\mathrm{Dice}} + 0.3\, \mathcal{L}_{\mathrm{Focal}}(\alpha\!=\!0.85,\gamma\!=\!3) \nonumber \\
-& + 0.2\, \mathcal{L}_{\mathrm{BCE}}(w_{+}\!=\!300).
+& + 0.2\, \mathcal{L}_{\mathrm{BCE}}(w_{+}).
 \end{align}
-The addition of BCE with $\mathrm{pos\_weight} = 300$ is necessary because the FP target is far sparser than AF: typical windows have $<0.05\%$ positive pixels. The higher Focal $\gamma = 3$ (vs.\ $\gamma = 2$ in AF) further downweights easy negatives.
+The addition of BCE is necessary because the FP target is far sparser than AF: typical windows have $<0.05\%$ positive pixels. \rev{The positive weight $w_{+}$ is not a hand-tuned constant: it is computed at preload time from the observed positive-pixel ratio of the training split, and therefore varies slightly between runs (116.6--117.3 across our runs). This removes one hyperparameter from the design and ties the term directly to the class balance it is intended to correct.} The higher Focal $\gamma = 3$ (vs.\ $\gamma = 2$ in AF) further downweights easy negatives.
 
 \paragraph*{Test-time augmentation.} At inference, the FP variant uses $8 \times$ test-time augmentation~\cite{wang2019aleatoric}: the input is passed through horizontal flip, vertical flip, both, and three $90^\circ$ rotations, plus the identity, and the resulting logits are averaged before the sigmoid and threshold.
 
@@ -490,9 +538,12 @@ The addition of BCE with $\mathrm{pos\_weight} = 300$ is necessary because the F
 
 \subsection{Implementation Details}
 
-All experiments are conducted on a single NVIDIA T4 GPU (16 GB VRAM) using PyTorch 2.10 with automatic mixed precision (AMP). The full training pipeline for both tasks completes within 12 hours on this hardware.
+All experiments are conducted on a single NVIDIA T4 GPU (16 GB VRAM) using PyTorch 2.10 with automatic mixed precision (AMP). \rev{A single training run takes between 3.5 and 6.5 hours depending on task and window length (Table~\ref{tab:fp_resource}); one run of each of the three configurations completes in approximately 14 hours.}
 
-\paragraph*{Shared hyperparameters.} Batch size 8; patch size $256 \times 256$ (centre crop of the full scene); optimiser AdamW~\cite{kingma2015adam,loshchilov2019decoupled} with learning rate $5 \times 10^{-4}$ and weight decay $1 \times 10^{-4}$; OneCycleLR~\cite{smith2019super} schedule with $\mathrm{pct\_start} = 0.1$ and cosine annealing; gradient clipping at norm 1.0; random seed 42.
+\paragraph*{Shared hyperparameters.} Batch size 8; patch size $256 \times 256$ (centre crop of the full scene); optimiser AdamW~\cite{kingma2015adam,loshchilov2019decoupled} with learning rate $5 \times 10^{-4}$ and weight decay $1 \times 10^{-4}$; OneCycleLR~\cite{smith2019super} schedule with $\mathrm{pct\_start} = 0.1$ and cosine annealing; gradient clipping at norm 1.0. \rev{Each configuration is trained from
+\nseedAF{} (AF) and \nseedFP{} (FP) independent random seeds; all reported
+figures are means over those runs with the standard deviation given alongside,
+and per-seed outputs are released with the code.}
 
 \paragraph*{AF.} 80 epochs for TS = 2, 100 epochs for TS = 1. VIIRS channels are normalised with per-band means and standard deviations computed once on a probe fire and reused across runs.
 
@@ -500,10 +551,9 @@ All experiments are conducted on a single NVIDIA T4 GPU (16 GB VRAM) using PyTor
 
 \paragraph*{Sampling.} For AF we keep only training windows that contain at least 10 fire pixels and include at most 2 times as many negative windows as positive. For FP we use at least 3 burned pixels as the positive threshold and a negative-to-positive ratio of 1.5. These heuristics stabilise training without overfitting to the positive class.
 
-\paragraph*{Threshold selection.} For both tasks we sweep the inference threshold over the validation set at 0.05 increments from 0.05 to 0.80, and select the threshold that maximises validation F1. The optimal AF threshold is consistently in the range $[0.20, 0.22]$; the optimal FP threshold is determined per run.
+\paragraph*{Threshold selection.} For both tasks we sweep the inference threshold over the validation set and select the value that maximises validation F1, independently in each run, then apply it unmodified at test time. \rev{No test-set information enters the selection. The selected AF value varies widely between runs while test F1 does not, which we report as evidence of insensitivity in Section~\ref{sec:afresults}; the FP runs selected the same value throughout.}
 
-\paragraph*{Metrics.} For all tasks we report pixel-level F1 and IoU (Jaccard index) aggregated over all pixels in all test fires (micro-average). Per-fire F1 and IoU are also reported for visualisation.
-
+\paragraph*{Metrics.} For all tasks we report pixel-level F1 and IoU (Jaccard index) aggregated over all pixels in all test fires (micro-average). \rev{Precision and recall at the selected operating point, and per-fire F1 and IoU, are also reported.} \rev{Section~\ref{sec:protocol} states the full evaluation protocol and its relationship to the reference implementation.}
 
 
 \subsection{\rev{Evaluation Protocol}}
@@ -626,7 +676,9 @@ masks; a centred $256 \times 256$ crop; and a threshold selected on validation
 and applied unmodified at test time. Per-seed outputs are released with the
 code.}
 
+
 \subsection{Active Fire Results}
+\label{sec:afresults}
 
 \rev{Table~\ref{tab:af_results} reports our test-set F1 and IoU at TS = 1 and
 TS = 2 alongside the twelve baselines of the dataset
@@ -681,8 +733,8 @@ annotated test fires. The two groups are not directly comparable.}}
 \rowcolor{white} SwinUNETR-3D       & 2 & 0.823 & 0.727 \\
 \midrule
 \multicolumn{4}{@{}l}{\textit{\rev{This work, protocol of Section~\ref{sec:protocol}, 15 annotated test fires}}} \\
-\rowcolor{oursgood} SpaSE-UNet3D & 1 & \afTSone{} & \textcolor{red}{[IoU]} \\
-\rowcolor{oursgood} SpaSE-UNet3D & 2 & \afTStwo{} & \afIoU{} \\
+\rowcolor{oursgood} SpaSE-UNet3D & 1 & \afTSone{} & \afIoUone{} \\
+\rowcolor{oursgood} SpaSE-UNet3D & 2 & \afTStwo{} & \afIoUtwo{} \\
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
@@ -699,7 +751,7 @@ achievable on the test set, so no advantage accrues from the selection
 procedure; we report the test sweep as evidence of robustness only, and it plays
 no part in selection.}
 
-\rev{Training behaviour is shown in Fig.~\ref{fig:curves}. Validation F1 rises
+\rev{Validation F1 rises
 above 0.80 within the first ten epochs and then oscillates as the operating
 point shifts between precision- and recall-favouring regimes, stabilising as the
 OneCycle schedule anneals the learning rate. Training and validation loss remain
@@ -709,13 +761,12 @@ Section~\ref{sec:audit}: recall sits near 0.80 across training while precision
 oscillates widely, the asymmetry expected when some training windows are
 supervised by all-negative targets derived from unannotated scenes.}
 
-
-The aggregate test F1 is informative but masks per-fire variability. Fig.~\ref{fig:af_per_fire} breaks down test F1 across the 15 audited test fires. 14 of 15 fires reach F1 $\geq 0.792$, and the median fire (\textit{Camp}) reaches F1 = 0.852. The seven highest-F1 fires --- \textit{Dixie}, \textit{Carr}, \textit{Creek}, \textit{Thomas}, \textit{Eagle Bluff}, \textit{Sparks Lake}, and \textit{Camp} --- all exceed F1 = 0.85 and individually beat the published SwinUNETR-3D aggregate. The single outlier is the low-intensity \textit{Blue~Ridge} fire at F1 = 0.746; manual inspection of its VIIRS scenes shows that the active-fire signal is faint, often confined to a single pixel, and consistently obscured by smoke plumes that drift from neighbouring confirmed-fire pixels.
+The aggregate test F1 is informative but masks per-fire variability. Fig.~\ref{fig:af_per_fire} breaks down test F1 across the 15 \rev{annotated} test fires. 14 of 15 fires reach F1 $\geq 0.792$, and the median fire \rev{(\textit{Double Creek})} reaches F1 = \rev{0.850}. \rev{Eight fires exceed F1 = 0.85.} The single outlier is the low-intensity \textit{Blue~Ridge} fire at F1 = 0.746; manual inspection of its VIIRS scenes shows that the active-fire signal is faint, often confined to a single pixel, and consistently obscured by smoke plumes that drift from neighbouring confirmed-fire pixels.
 
 \begin{figure}[H]
 \centering
 \input{figs/af_ts2_per_fire.tex}
-\caption{Per-fire test F1 for SpaSE-UNet3D at TS = 2 on the audited AF test set (15 fires, sorted by F1). Red dashed line: SwinUNETR-3D paper baseline.}
+\caption{Per-fire test F1 for SpaSE-UNet3D at TS = 2 on the 15 annotated AF test fires, sorted by F1. \rev{Measured under the protocol of Section~\ref{sec:protocol}; no baseline reference line is shown, since published per-fire figures are not available and the aggregates are not computed under a common protocol.}}
 \label{fig:af_per_fire}
 \end{figure}
 
@@ -764,18 +815,70 @@ VIIRS day scene: \textcolor{red}{red}\,=\,true positive, \textcolor{green!60!bla
 \label{fig:af_overlays}
 \end{figure}
 
- Att-U-Net-3D 0.770), demonstrating that even a single VIIRS frame contains enough information to set a new state of the art when paired with the right inductive bias.
+\subsubsection{\rev{Measured Effect of the Label Audit}}
+\label{sec:auditeffect}
 
-\paragraph*{Impact of the audit.} To isolate the effect of the label audit, we also trained the same SpaSE-UNet3D architecture on the unaudited training set.The resulting model reaches test F1 = 0.818 (labelled ``v1 dirty'' in our logs). The audit alone is therefore responsible for a $+3.7\%$ absolute F1 gain, which exceeds the $+3.2\%$ gain of SpaSE-UNet3D over SwinUNETR-3D on audited data. This confirms the argument in Section~\ref{sec:audit} that the label quality of TS-SatFire is a first-class factor in benchmark comparisons.
+\rev{The submitted version of this paper attributed a gain of $+0.037$ F1 to the
+label audit, comparing an audited model against an earlier unaudited one. That
+comparison was confounded: the two models differed in training configuration as
+well as in data filtering. We therefore ran a controlled experiment in which two
+models differ in exactly one respect---whether windows drawn from unannotated
+days are retained with all-negative targets, reproducing the effect of reading a
+NaN label band through \texttt{nan\_to\_num}---with architecture,
+initialisation, schedule, sampling and threshold procedure held fixed.}
+
+\begin{table}[H]
+\centering
+\caption{\rev{Effect of label filtering on AF, all other factors held constant.
+Single run per condition at a fixed threshold; not directly comparable to
+Table~\ref{tab:af_results}.}}
+\label{tab:audit_effect}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lrrrr@{}}
+\arrayrulecolor{hdrblue}
+\toprule
+\rowcolor{hdrblue}
+\color{white}\textbf{Condition} &
+\color{white}\textbf{Train windows} &
+\color{white}\textbf{Val F1} &
+\color{white}\textbf{Test F1} &
+\color{white}\textbf{Test IoU} \\
+\midrule
+\rowcolor{rowA} Audited   & 1{,}719 & 0.8208 & 0.8533 & 0.7441 \\
+\rowcolor{white} Unaudited & 1{,}790 & 0.8192 & 0.8514 & 0.7412 \\
+\arrayrulecolor{hdrblue}\bottomrule
+\end{tabular}
+\end{table}
+
+\rev{The audited model is better on both validation and test, but by 0.0019 F1
+---an order of magnitude smaller than the figure claimed in the submitted
+version, which we withdraw. The explanation is in the window counts. Day-level
+filtering (Section~\ref{sec:audit}) already rejects any window whose final day
+lacks a label, and the AF label refers to that final day; a fire with no
+annotation on any day therefore contributes almost nothing even when it is not
+excluded at fire level. Only 71 of 1{,}790 windows, or 4.0\%, differ between the
+two conditions.}
+
+\rev{This is a result about the interaction of the two filtering levels rather
+than about the audit's value, and it has a practical consequence: the day-level
+filter does most of the work. A practitioner who verifies labels at day level
+obtains most of the benefit without any fire-level audit. A pipeline with
+neither---one that converts NaN label bands to zeros and trains on every window,
+as the reference loader does by default---is the configuration in which the
+failure mode appears at full magnitude.}
+
+\rev{The audit's contribution is therefore not an accuracy gain, and we no
+longer present it as one. It is that two of the seventeen AF test fires cannot
+be scored at all, so that any full-split aggregate is partly a statement about
+the empty-ground-truth convention; that the burned-area label encoding is
+undocumented and cannot be recovered by inspection alone; and that the
+all-negative supervision mechanism is real, its measured cost here being small
+only because of the day-level filter that neutralises it. Reporting the measured
+value in place of the claimed one is, we think, the more useful contribution.}
 
 \subsection{Fire Progression Results}
+\label{sec:fpresults}
 
-% =====================================================================
-% REPLACE: from "Table~\ref{tab:fp_results} reports the test-set F1..."
-% down to and including the paragraph ending
-% "...the model correctly predicts as nearly all-negative."
-% (section opener, Table 5, and the four paragraphs that follow it)
-% =====================================================================
 
 \rev{Fire progression is evaluated on the full official test set of 24 US\_2021
 fires. The submitted version reported a 16-fire subset, excluding eight fires on
@@ -816,15 +919,15 @@ figures are measured under the protocol of Section~\ref{sec:protocol} over
 \midrule
 \multicolumn{4}{@{}l}{\textit{\rev{This work, protocol of Section~\ref{sec:protocol}}}} \\
 \rowcolor{oursgood} SpaSE-UNet3D, all 24 test fires & 2 & \fpAll{} & \fpIoU{} \\
-\rowcolor{white} \quad \textit{\rev{18 fires with a usable window}} & 2 & \textcolor{red}{[F1$\pm$SD]} & \textcolor{red}{[IoU$\pm$SD]} \\
-\rowcolor{white} \quad \textit{\rev{16-fire subset of submitted version}} & 2 & \textcolor{red}{[F1$\pm$SD]} & \textcolor{red}{[IoU$\pm$SD]} \\
+\rowcolor{white} \quad \textit{\rev{18 fires with a usable window}} & 2 & \fpEighteen{} & \fpIoUeighteen{} \\
+\rowcolor{white} \quad \textit{\rev{16-fire subset of submitted version}} & 2 & \fpSixteen{} & \fpIoUsixteen{} \\
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
 
 \rev{Run-to-run variance is the more important quantity here. Across
 \nseedFP{} runs differing only in random seed, test F1 on the full test set has
-a standard deviation of \textcolor{red}{[SD]}, against a range of 0.021
+a standard deviation of \fpSD{}, against a range of 0.021
 separating the five published baselines from one another. The seed noise of a
 single architecture is therefore of the same order as, or larger than, the
 entire spread between architectures, and single-run comparisons on this task
@@ -854,8 +957,7 @@ cases to stochastic ember activity rather than coherent flame-front propagation;
 that explanation was speculative, and measurement identifies a concrete and
 sufficient cause instead: truncation of the fire by the $256 \times 256$ crop.
 Across the progression test set a mean of 56.3\% of labelled positive pixels
-fall outside the crop, reaching 92.7\% in the worst case
-(Section~\ref{sec:crop}). Per-fire F1 correlates strongly and negatively with
+fall outside the crop, reaching 92.7\% in the worst case. Per-fire F1 correlates strongly and negatively with
 the fraction of positive pixels lost to the crop (Spearman $\rho = -0.685$,
 $p = 0.0034$). Fires scoring below 0.375 lose on average 66.7\% of their
 positive pixels to the crop; those scoring above lose 34.6\%. A model asked to
@@ -877,11 +979,11 @@ protocol and would not be comparable to them.}
 \begin{figure}[H]
 \centering
 \input{figs/fp_per_fire.tex}
-\caption{Per-fire test F1 for SpaSE-UNet3D on the 16 usable US\_2021 fires (sorted by F1). Eight fires with near-zero progression signal are excluded as discussed in Section~\ref{sec:audit}. Red dashed line: best paper baseline (0.375).}
+\caption{Per-fire test F1 for SpaSE-UNet3D on the US\_2021 test fires, sorted by F1. \rev{Fires without a usable progression window contribute no counts and are omitted from the chart; the aggregate in Table~\ref{tab:fp_results} is over all 24 official test fires. No baseline reference line is shown, for the reasons given in Section~\ref{sec:protocol}.}}
 \label{fig:fp_per_fire}
 \end{figure}
 
-To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for all 16 test fires, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model has learned to propagate the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain features. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) rather than a complete shape mismatch. The lower-F1 fires reveal the dominant failure modes: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop size, where a single mispredicted patch dominates the F1 score; \textit{CA-4086} (F1 = 0.007) is essentially a no-signal scene where the model correctly returns near-zero probabilities everywhere except a few cloud-induced false positives. These cases motivate our choice to also report per-fire F1 alongside the aggregate, since a single low-burn-area fire can disproportionately shift the micro-averaged F1.
+To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for \rev{the test fires with a usable window}, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model propagates the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain and weather covariates. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) rather than a complete shape mismatch. The lower-F1 fires reveal the dominant failure mode identified above: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop, so that a single mispredicted patch dominates the score. \rev{These cases motivate reporting per-fire F1 alongside the aggregate, since a single truncated fire can shift the micro-averaged figure disproportionately.}
 
 \begin{figure}[!tbp]
 \centering
@@ -919,14 +1021,14 @@ CA-3451 & 0.373 & MT-4579 & 0.371 & ID-4663 & 0.365 & WA-4877 & 0.310 \\
 ID-4762 & 0.208 & CA-3627 & 0.204 & WA-4879 & 0.153 & CA-4086 & 0.007 \\
 \bottomrule
 \end{tabular}}
-\caption{FP prediction maps for all 16 usable US\,2021 fires, sorted by F1 from
+\caption{FP prediction maps for the US\,2021 test fires with a usable progression window, sorted by F1 from
 top-left to bottom-right. Each panel overlays the predicted progression mask on the
 VIIRS day scene: \textcolor{red}{red}\,=\,true positive, \textcolor{green!60!black}{green}\,=\,false positive,
 \textcolor{blue}{blue}\,=\,false negative. Per-fire F1 scores are listed in the table above.}
 \label{fig:fp_maps}
 \end{figure}
 
-Table~\ref{tab:fp_resource} summarises the resource footprint for both tasks. SpaSE-UNet3D's parameter count (24.28M for FP, 32.88M for AF) is in the same regime as the published 3D U-Net baselines but considerably smaller than transformer variants, and the entire training pipeline completes within 12 hours on a single NVIDIA T4 GPU.
+Table~\ref{tab:fp_resource} summarises the resource footprint for both tasks. \rev{SpaSE-UNet3D's parameter count---24.28\,M for FP and 32.88\,M for AF---is in the same regime as the published 3D U-Net and transformer baselines rather than markedly smaller, and we make no claim of a parameter advantage over them. The efficiency argument rests instead on the temporal budget and the training cost: each configuration trains in between 3.5 and 6.5 hours on a single NVIDIA T4, using two-day observation windows where the published baselines use six.}
 
 \begin{table}[H]
 \centering
@@ -950,29 +1052,169 @@ Table~\ref{tab:fp_resource} summarises the resource footprint for both tasks. Sp
 \end{tabular}
 \end{table}
 
+
+\subsection{\rev{Component Ablation}}
+\label{sec:ablation}
+
+\rev{Four configurations were trained to isolate the contribution of the
+individual design choices: the full model, a variant replacing every
+spatial-only $(1,3,3)$ kernel with a full $(3,3,3)$ kernel, a variant with the
+squeeze-and-excitation modules removed, and a variant without the
+deep-supervision head. All arms used an identical 40-epoch budget and identical
+data, sampling, optimiser and schedule, and were evaluated on the validation
+split so that no test-set information entered any design decision. The full
+configuration was trained three times to estimate run-to-run variability; the
+three reduced configurations were trained once each.}
+
+\begin{table}[H]
+\centering
+\caption{\rev{Component ablation, AF task, TS = 2, validation split, 40 epochs
+per arm.}}
+\label{tab:ablation}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lrrrr@{}}
+\arrayrulecolor{hdrblue}
+\toprule
+\rowcolor{hdrblue}
+\color{white}\textbf{Configuration} &
+\color{white}\textbf{Val F1} &
+\color{white}\textbf{$\Delta$} &
+\color{white}\textbf{$\Delta/\sigma$} &
+\color{white}\textbf{Params} \\
+\midrule
+\rowcolor{rowA} Full model (3 runs) & $0.8214 \pm 0.0009$ & --- & --- & 32.88\,M \\
+\rowcolor{white} Full $(3,3,3)$ convolutions & 0.8205 & $-0.0010$ & 1.1 & 89.36\,M \\
+\rowcolor{rowA} Without SE attention & 0.8219 & $+0.0005$ & 0.6 & 32.44\,M \\
+\rowcolor{white} Without deep supervision & 0.8229 & $+0.0015$ & 1.6 & 32.88\,M \\
+\arrayrulecolor{hdrblue}\bottomrule
+\end{tabular}
+\end{table}
+
+\rev{Run-to-run standard deviation on the full configuration is
+$\sigma = 0.0009$. Every reduced configuration falls within $1.6\sigma$ of it,
+and the three reduced arms lie within 0.0024 of one another---a range comparable
+to the variability of a single configuration retrained. At this sample size the
+experiment cannot separate the components, and we therefore make no claim that
+any individual component improves accuracy. In particular, the submitted
+version's assertion that full $(3,3,3)$ convolutions reduce validation F1 is not
+supported by this measurement, and we withdraw it; we likewise do not claim an
+accuracy benefit for SE attention or deep supervision, both of which scored
+marginally higher in their single reduced run. Each reduced arm was trained
+once, so these differences are point estimates without variance of their own,
+and a claim in either direction would require repeated runs per arm.}
+
+\rev{The comparison that is unambiguous at this sample size concerns cost rather
+than accuracy. Replacing spatial-only kernels with full $(3,3,3)$ kernels
+increases the parameter count from 32.88\,M to 89.36\,M---a factor of
+$2.72$---while validation F1 remains within $1.1\sigma$. On observation windows
+of one to two days, the additional temporal-mixing capacity is therefore not
+converted into performance, and the factorised alternative achieves the same
+result at substantially lower cost. This supports the parameter-efficiency half
+of the finding reported in the action-recognition
+literature~\cite{tran2018closer,qiu2017learning}, not the accuracy half. The SE
+modules account for 0.44\,M parameters, or 1.3\% of the model, so whatever their
+contribution it is obtained at negligible cost.}
+
+\rev{We did not ablate the fire-progression variant. Section~\ref{sec:fpresults}
+establishes a run-to-run standard deviation of \fpSD{} on that task, far larger
+than any plausible single-component effect, so a single-run ablation of the ASPP
+bottleneck, the activation, the dropout removal or the cumulative burned-area
+channel would be uninterpretable. We state the FP design choices in
+Section~\ref{sec:method} as what they are---decisions made sequentially on a
+single validation split of eight usable fires, without nested
+cross-validation---and identify a properly powered ablation as necessary future
+work. This applies with particular force to the cumulative burned-area input
+channel, which provides information some baselines may not receive; we note that
+the reference fire-progression pipeline likewise aggregates its thermal channels
+by cumulative maximum over the observation window, so cumulative history is not
+unique to our formulation, but we have not measured the channel's contribution
+and do not claim it is unimportant.}
+
 %%=============================================================
 \section{Discussion}
 \label{sec:discussion}
 %%=============================================================
 
-The results above support three claims that are worth stating plainly.
+\rev{The results above support four claims, stated with the strength the
+evidence allows.}
 
-\paragraph*{Data quality is a first-class contribution.} The label audit alone closes $+3.7\%$ absolute F1 on the AF task --- a larger delta than our architectural improvement over SwinUNETR-3D on audited data. This is consistent with broader findings that label noise in benchmark test sets routinely destabilises model rankings~\cite{northcutt2021pervasive,pelletier2017assessing}. Researchers comparing models on TS-SatFire without auditing the labels are therefore measuring data-quality noise as much as they are measuring architectural differences. We encourage the community to treat the exclusion lists released with this paper as a mandatory preprocessing step for the benchmark.
+\paragraph*{\rev{Evaluation convention, not only architecture, determines
+reported rankings.}} \rev{Applying the reference protocol to fixed model weights
+moves F1 by 0.10 (Section~\ref{sec:protocol}), while the twelve published
+baselines span 0.11 between best and worst. A difference of this size, arising
+from measurement rather than modelling, is sufficient to reorder the benchmark.
+We do not suggest the reference implementation is incorrect---aggregation and
+label conventions are legitimate design choices---but they must be stated for a
+comparison to mean anything, and they are not currently recoverable from the
+published description alone. The identity
+$\mathrm{IoU} = \mathrm{F1}/(2-\mathrm{F1})$ offers a cheap diagnostic: any
+reported pair that violates it is not micro-averaged, and is therefore not
+comparable to a micro-averaged pair.}
 
-\paragraph*{Spatial-only convolutions are the right inductive bias for short temporal stacks.} SpaSE-UNet3D at TS = 1 is essentially tied with TS = 2 (F1 = 0.854 vs.\ 0.855), and both are well above every 3D baseline at TS $\in \{3, 6\}$. The implicit hypothesis of full 3D convolutions is that temporal neighbours carry complementary information worth mixing early. At TS = 2 this is not true in practice: the temporal information is already captured by the SE-reweighted channel statistics, and dedicating parameters to temporal mixing appears to harm generalisation. This finding is in line with the action-recognition literature where factorised spatiotemporal convolutions outperform full 3D ones~\cite{tran2018closer,qiu2017learning}, and we expect the pattern to generalise to other short-window satellite-remote-sensing tasks.
+\paragraph*{\rev{Run-to-run variance on fire progression exceeds the spread
+between published architectures.}} \rev{Seeds differing in nothing else produce
+a standard deviation of \fpSD{} on the progression test set, against 0.021
+separating the five published baselines. Single-run comparisons on this task
+therefore cannot distinguish architectures, and reported orderings should be
+treated as provisional until repeated. Active fire detection behaves quite
+differently under the same pipeline, with a spread two orders of magnitude
+smaller; the difference lies in label sparsity and in the number of independent
+fire events available, not in the models.}
 
-\paragraph*{Task-specific variation is necessary.} The differences between the AF and FP variants --- ReLU vs.\ GELU, Dropout vs.\ no-Dropout, plain vs.\ ASPP bottleneck, Dice+Focal vs.\ Dice+Focal+BCE, 3D vs.\ 2D-after-temporal-pool head --- are not cosmetic. Each was found to matter on its respective task, and the FP objective in particular cannot be trained competitively without the ASPP bottleneck and the BCE term. This suggests that a single fully shared architecture for all three TS-SatFire tasks would give up non-trivial performance on FP.
+\paragraph*{\rev{Spatial-only convolutions are inexpensive rather than
+demonstrably superior.}} \rev{Our ablation (Section~\ref{sec:ablation}) does not
+resolve an accuracy difference between spatial-only and full 3D kernels at the
+sample size available, and we make no such claim. What it does establish is that
+full $(3,3,3)$ kernels cost $2.72\times$ the parameters without a measurable
+return on one- to two-day windows. The near-equivalence of our TS = 1 and TS = 2
+results points the same way: on windows this short there is little inter-day
+signal for a temporal filter to exploit. We expect this to hold for other
+short-window satellite tasks, but we have tested it on one benchmark only.}
 
-\paragraph*{Limitations.} Our work has three limitations worth noting. First, we do not train a BA model. The BA audit reveals that the most interesting BA modelling question is whether the label encoding (Julian-day codes) can be leveraged for multi-class or regression targets, which we leave to future work. Second, our FP test set excludes eight fires (six NM/FL/MT fires with missing or near-zero BA labels, and two Arizona fires with zero measurable progression signal within the center crop) with burn fractions $< 0.001\%$; while we justify this on measurement grounds, some readers may prefer the stricter 24-fire aggregate. Third, our TTA for FP uses only symmetry augmentations; learned or semi-supervised TTA could give a further bump.
+\paragraph*{\rev{Centre-cropping discards most of the progression signal.}}
+\rev{A mean of 56.3\% of progression-labelled pixels fall outside the
+$256 \times 256$ crop, and the fraction lost predicts per-fire accuracy
+($\rho = -0.685$, $p = 0.0034$). Cropping is a near-universal convention adopted
+for memory reasons; on this dataset it means that any progression comparison is
+partly a comparison of how each model handles fires whose fronts have been
+cropped away. This is a property of the evaluation setup rather than of any
+model, and full-scene evaluation would remove it.}
+
+\paragraph*{\rev{Applicability beyond this benchmark.}} \rev{The architecture
+makes no assumption specific to VIIRS: it requires a short stack of
+co-registered multispectral rasters and a per-pixel target, so it transfers
+directly in principle to Sentinel-2, Sentinel-3 SLSTR or MODIS stacks, and to
+the Next Day Wildfire Spread formulation~\cite{huot2022next}. The SE modules
+reweight input channels adaptively, which is the mechanism most likely to carry
+over to a different band set. We have not tested any of this. More portable than
+the architecture, we think, are the two methodological findings: the
+F1--IoU identity as a check on reported metrics, and the practice of reporting
+seed variance before attributing a difference to an architecture, both of which
+apply to any segmentation benchmark.}
+
+\paragraph*{Limitations.} \rev{Five limitations bear on how these results should
+be read. First, all conclusions rest on a single benchmark and a single sensor
+family; we have not validated them elsewhere. Second, the baselines were not
+retrained under our protocol, so the protocol decomposition isolates the
+measurement effect on our weights but does not establish how the baseline
+architectures would rank under a common evaluation. Third, the component
+ablation uses one run per reduced arm and is powered only to rule out large
+effects; the fire-progression variant is not ablated at all. Fourth, our
+active-fire results rest on \nseedAF{} runs and our progression results on
+\nseedFP{}, which is sufficient to establish the variance contrast reported here
+but not to place tight intervals on any individual figure. Fifth, we train no
+burned-area model: the audit establishes the label encoding and the exclusion
+lists, but the question of whether the Julian-day codes in band~8 can support
+multi-class or regression targets is left open.}
 
 %%=============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 %%=============================================================
 
-We presented \textbf{SpaSE-UNet3D}, a family of spatial-only 3D UNets with Squeeze-and-Excitation channel attention, together with the first systematic label-quality \rev{and evaluation-protocol} audit of the TS-SatFire benchmark. \rev{Under the protocol defined in Section~\ref{sec:experiments}, SpaSE-UNet3D reaches F1\,=\,$0.8549 \pm 0.0005$ on active fire detection and F1\,=\,$0.3843 \pm 0.0392$ on fire progression, using two-day observation windows where the published baselines use six, and training in under 12 hours on a single NVIDIA~T4 GPU. These figures are reported under our own protocol and are not directly comparable to the published baselines, for the reasons set out in Section~\ref{sec:experiments}.} The label audit is a standalone contribution that exposes substantial label noise \rev{and evaluation ambiguity} in the released benchmark and is required for fair future comparisons.
+We presented \textbf{SpaSE-UNet3D}, a family of spatial-only 3D UNets with Squeeze-and-Excitation channel attention, together with the first systematic label-quality \rev{and evaluation-protocol} audit of the TS-SatFire benchmark. \rev{Under the protocol defined in Section~\ref{sec:experiments}, SpaSE-UNet3D reaches F1\,=\,\afTStwo{} on active fire detection and F1\,=\,\fpAll{} on fire progression, using two-day observation windows where the published baselines use six, and training in under 15 hours on a single NVIDIA~T4 GPU. We do not claim that these results exceed the published baselines: as Section~\ref{sec:experiments} establishes, the two sets of figures are not computed under a common evaluation protocol, and we regard establishing that fact as the more useful contribution.} \rev{The audit and protocol analysis are the paper's primary contribution: they establish that two of the seventeen active-fire test fires carry no annotation and cannot be scored, that the burned-area label encoding is undocumented in the dataset publication, and that evaluation convention moves F1 on this benchmark by more than the spread separating its published baselines. We release the exclusion lists, the protocol specification and the per-seed outputs so that future comparisons can be made on a stated and common basis.}
 
-\rev{Four directions follow directly from the limitations of this study. First, a properly powered ablation of the fire-progression variant, which the measured run-to-run standard deviation of 0.039 places beyond the reach of single-run experiments. Second, retraining the baseline architectures under a single stated protocol, which would isolate architectural differences from measurement conventions. Third, full-scene rather than centre-cropped evaluation, since a mean of 56.3\% of progression-labelled pixels fall outside the $256 \times 256$ crop and crop truncation predicts per-fire accuracy. Fourth, independent validation on other sensors and wildfire datasets, since all conclusions reported here rest on a single benchmark.}
+\rev{Four directions follow directly from the limitations of this study. First, a properly powered ablation of the fire-progression variant, which the measured run-to-run standard deviation of \fpSD{} places beyond the reach of single-run experiments. Second, retraining the baseline architectures under a single stated protocol, which would isolate architectural differences from measurement conventions. Third, full-scene rather than centre-cropped evaluation, since a mean of 56.3\% of progression-labelled pixels fall outside the $256 \times 256$ crop and crop truncation predicts per-fire accuracy. Fourth, independent validation on other sensors and wildfire datasets, since all conclusions reported here rest on a single benchmark.}
 
 All code, checkpoints, and audit reports are publicly available at \url{https://github.com/mavroul1s/DeepFire-Forecaster}.
 
