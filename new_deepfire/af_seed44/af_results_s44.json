@@ -1,0 +1,21 @@
+{
+  "model": "SE-UNet3D-AF-v6",
+  "seed": 43,
+  "ts": 2,
+  "n_params": 32876034,
+  "epochs_run": 80,
+  "best_epoch": 45,
+  "best_val_f1": 0.8234736832697275,
+  "best_val_iou": 0.6999194761391088,
+  "val_selected_threshold": 0.15000000000000002,
+  "test_micro_f1_15": 0.8546055834410515,
+  "test_micro_iou_15": 0.7461234061263374,
+  "test_macro_f1_15": 0.8432808994105648,
+  "test_micro_f1_14_no_double_creek": 0.8545900446321528,
+  "test_micro_f1_all_evaluated": 0.8546055834410515,
+  "test_oracle_threshold": 0.2,
+  "test_oracle_f1": 0.854285160561861,
+  "train_fires": 120,
+  "val_fires": 12,
+  "excluded_no_label": 19
+}

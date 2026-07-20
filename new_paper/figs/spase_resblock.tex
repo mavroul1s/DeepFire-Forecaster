@@ -1,0 +1,74 @@
+% ResBlock3D internal structure: AF and FP variants side-by-side
+% Compile standalone or include via \input{figs/spase_resblock.tex}
+
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    font=\footnotesize\sffamily,
+    node distance=2pt,
+    every node/.style={align=center},
+    op/.style={rectangle, rounded corners=2pt, draw, thick, minimum width=34mm, minimum height=14pt, inner sep=2pt},
+    conv/.style={op, fill=violet!12, draw=violet!60},
+    norm/.style={op, fill=gray!12, draw=gray!50},
+    drop/.style={op, fill=yellow!20, draw=yellow!70!black, font=\scriptsize},
+    se/.style  ={op, fill=red!12, draw=red!60},
+    add/.style ={op, fill=green!15, draw=green!50},
+    arr/.style ={-stealth, thick, gray!70},
+    skip/.style={-stealth, thick, blue!70, dashed},
+    title/.style={font=\bfseries\sffamily, align=center}
+]
+
+% =========================================================
+% LEFT: AF variant
+% =========================================================
+\node[title, color=violet!80!black] (af_t) {AF variant};
+\node[conv, below=4pt of af_t] (af1) {Conv3d $(1,3,3)$, ic$\to$oc};
+\node[norm, below=of af1]      (af2) {BN3d $\to$ ReLU};
+\node[drop, below=of af2]      (af3) {Dropout3D ($p = 0.1$)};
+\node[conv, below=of af3]      (af4) {Conv3d $(1,3,3)$, oc$\to$oc};
+\node[norm, below=of af4]      (af5) {BN3d};
+\node[se,   below=of af5]      (af6) {SEBlock3D ($r = 8$)};
+\node[add,  below=of af6]      (af7) {$\oplus$ skip $\to$ ReLU};
+
+\draw[arr] (af6) -- (af7);
+
+\coordinate (af_skip_top) at ([xshift=-14mm]af1.west);
+\coordinate (af_skip_bot) at ([xshift=-14mm]af7.west);
+\draw[thick, blue!70, dashed] (af1.west) -- (af_skip_top);
+\draw[thick, blue!70, dashed] (af_skip_top) -- (af_skip_bot);
+\draw[skip] (af_skip_bot) -- (af7.west);
+\node[font=\scriptsize, color=blue!70, align=center, anchor=east]
+   at ([xshift=-2mm]$(af_skip_top)!0.5!(af_skip_bot)$)
+   {Identity (ic=oc)\\or Conv$1{\times}1$\\$+$ BN};
+
+% =========================================================
+% RIGHT: FP variant
+% =========================================================
+\node[title, color=red!70!black, right=24mm of af_t] (fp_t) {FP variant};
+\node[conv, below=4pt of fp_t] (fp1) {Conv3d $(1,3,3)$, ic$\to$oc};
+\node[norm, below=of fp1]      (fp2) {BN3d $\to$ \textbf{GELU}};
+\node[drop, below=of fp2, fill=gray!8, draw=gray!40] (fp3) {\textbf{No Dropout}};
+\node[conv, below=of fp3]      (fp4) {Conv3d $(1,3,3)$, oc$\to$oc};
+\node[norm, below=of fp4]      (fp5) {BN3d};
+\node[se,   below=of fp5]      (fp6) {SEBlock3D ($r = 8$)};
+\node[add,  below=of fp6]      (fp7) {$\oplus$ skip $\to$ \textbf{GELU}};
+
+\draw[arr] (fp6) -- (fp7);
+
+\coordinate (fp_skip_top) at ([xshift=14mm]fp1.east);
+\coordinate (fp_skip_bot) at ([xshift=14mm]fp7.east);
+\draw[thick, blue!70, dashed] (fp1.east) -- (fp_skip_top);
+\draw[thick, blue!70, dashed] (fp_skip_top) -- (fp_skip_bot);
+\draw[skip] (fp_skip_bot) -- (fp7.east);
+\node[font=\scriptsize, color=blue!70, align=center, anchor=west]
+   at ([xshift=2mm]$(fp_skip_top)!0.5!(fp_skip_bot)$)
+   {Identity (ic=oc)\\or Conv$1{\times}1$\\\textbf{no BN on skip}};
+
+% =========================================================
+% Footer note
+% =========================================================
+\node[below=14pt of af7, anchor=north west, xshift=-4mm,
+      text width=84mm, align=center, font=\scriptsize, color=gray!60!black]
+   {\textbf{All convolutions use kernel $(1, 3, 3)$ with padding $(0, 1, 1)$.} The temporal dimension $T$ is preserved through the block but never mixed across days.};
+
+\end{tikzpicture}%
+}
