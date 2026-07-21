@@ -87,33 +87,20 @@ NOAA-20 is the primary sensor system underlying the TS-SatFire benchmark
 (2025), which consolidates multispectral VIIRS image stacks for three
 tasks: Active Fire (AF) detection, Burned Area (BA) mapping, and Fire
 Progression (FP) prediction. We make two contributions. First, a
-\rev{systematic label-quality audit across all tasks and splits reveals that
-many fires lack ground-truth annotations: 18 training fires
-and 2 test fires are excluded for AF, and the two unannotated test fires cannot
-be scored by any model. We further show that the reference evaluation of this
-benchmark differs from an independently implemented one in eight respects, and
-that these differences move F1 by up to 0.10 on fixed model weights---several
-times the spread separating the published baselines from one another. Published
-figures are therefore not directly comparable to independently computed values,
-and we make no state-of-the-art claim.}
-We also document the BA label encoding in the released GeoTIFFs---a 
-prerequisite for downstream modelling; \rev{the BA task is used for auditing
-only and no BA model is trained.} Second, we propose
-SpaSE-UNet3D, a spatial Squeeze-and-Excitation 3D UNet. By using
-spatial-only $(1,3,3)$ convolutions, our architecture avoids temporal mixing 
-\rev{in the convolutional path}
-on short observation windows, while utilizing SE channel attention to reweight
-the VIIRS spectral bands dynamically. \rev{Under the protocol defined in this
-paper, SpaSE-UNet3D reaches F1\,=\,\fpAll{} on fire progression over
-the full 24-fire test set, and F1\,=\,\afTStwo{} on active fire
-detection, in both cases from two-day observation windows where the published
-baselines use six. On active fire, a single-day input reaches
-F1\,=\,\afTSone{}, close enough to the two-day result that we treat the two as
-substantially equivalent, indicating that one VIIRS acquisition already carries
-most of the detectable signal---which matters operationally for early detection,
-before a second overpass is available. The two variants use 24.3\,M and
-32.9\,M parameters and train in under 15 hours on a single GPU.} Code and
-results are publicly available.}
+\rev{label-quality audit across all tasks and splits shows that many fires lack
+ground-truth annotations: 18 training fires and 2 test fires are excluded for
+AF, and the two unannotated test fires cannot be scored by any model. We
+additionally document the evaluation procedure, which differs from an
+independently implemented one in eight respects, so that published and
+independently computed figures are not directly comparable.}
+\rev{We also document the BA label encoding in the released GeoTIFFs, a
+prerequisite for downstream modelling; the BA task is audited only.} Second, we propose
+SpaSE-UNet3D, a spatial Squeeze-and-Excitation 3D UNet \rev{using
+spatial-only $(1,3,3)$ convolutions, which avoid temporal mixing in the
+convolutional path, and SE attention to reweight the VIIRS bands. Under the
+protocol defined here it reaches F1\,=\,\afTStwo{} on AF and \fpAll{} on FP
+from two-day windows, against the baselines' six, at 32.9\,M and 24.3\,M
+parameters on a single GPU.} Code and results are publicly available.}
 
 \keyword{wildfire detection; VIIRS; active fire; fire progression; 3D U-Net; squeeze-and-excitation; remote sensing; deep learning; satellite imagery; label quality audit}
 
@@ -250,13 +237,25 @@ Section~\ref{sec:conclusion} concludes.
 \label{sec:related}
 %%=============================================================
 
-\paragraph*{Wildfire remote sensing with deep learning.} Early work on active fire detection from satellite imagery used per-pixel thresholds on thermal bands, typically VIIRS band I4 or the MODIS analogue~\cite{giglio2016collection,schroeder2014new}. Deep learning approaches in the last five years have moved to segmentation networks operating on multi-band VIIRS or Sentinel-2 stacks~\cite{pinto2020deep}, and more recently to 3D and transformer architectures that incorporate temporal context~\cite{moskolai2021application}. Huot et~al.~\cite{huot2022next} released the Next Day Wildfire Spread benchmark, with a related but coarser problem formulation than TS-SatFire. Zhao and Ban~\cite{zhao2025tssatfire} provide the most comprehensive comparison to date, benchmarking 12 architectures spanning U-Net~\cite{ronneberger2015unet}, Attention U-Net~\cite{oktay2018attention}, UNETR~\cite{hatamizadeh2022unetr}, SwinUNETR~\cite{hatamizadeh2022swin}, and recurrent encoders on a unified TS-SatFire benchmark. \rev{Their reported figures are the reference point for this paper, and Section~\ref{sec:protocol} examines the evaluation procedure that produced them.}
+\paragraph*{Wildfire remote sensing with deep learning.} Early work on active fire detection from satellite imagery used per-pixel thresholds on thermal bands, typically VIIRS band I4 or the MODIS analogue~\cite{giglio2016collection,schroeder2014new}. Deep learning approaches in the last five years have moved to segmentation networks operating on multi-band VIIRS or Sentinel-2 stacks~\cite{pinto2020deep}, and more recently to 3D and transformer architectures that incorporate temporal context~\cite{moskolai2021application}. Huot et~al.~\cite{huot2022next} released the Next Day Wildfire Spread benchmark, with a related but coarser problem formulation than TS-SatFire. \rev{Across this literature, comparisons are made between architectures on a fixed pipeline, while the pipeline itself---label construction, cropping, and the aggregation of per-pixel counts into a reported score---is described briefly and varies between publications, so nominally identical metrics are not always comparable. We quantify that ambiguity on one benchmark in Section~\ref{sec:protocol}.} Zhao and Ban~\cite{zhao2025tssatfire} provide the most comprehensive comparison to date, benchmarking 12 architectures spanning U-Net~\cite{ronneberger2015unet}, Attention U-Net~\cite{oktay2018attention}, UNETR~\cite{hatamizadeh2022unetr}, SwinUNETR~\cite{hatamizadeh2022swin}, and recurrent encoders on a unified TS-SatFire benchmark. \rev{Their reported figures are the reference point for this paper, and Section~\ref{sec:protocol} examines the evaluation procedure that produced them.}
 
 \paragraph*{Factorised spatiotemporal convolutions.} Tran et~al.~\cite{tran2018closer} and Qiu et~al.~\cite{qiu2017learning} showed that factorising 3D convolutions into separate spatial $(1, k, k)$ and temporal $(k, 1, 1)$ stages outperforms full $(k, k, k)$ kernels in video classification, with fewer parameters. SpaSE-UNet3D extends this principle to its extreme on short ($T \leq 2$) windows by retaining only the spatial component. \rev{Our ablation (Section~\ref{sec:ablation}) supports the parameter-efficiency half of this claim; it does not resolve an accuracy difference.}
 
+\paragraph*{\rev{Relation to existing 3D U-Net variants.}} \rev{SpaSE-UNet3D
+shares its encoder--decoder skeleton with U-Net-3D~\cite{cciccek20163d}, so it is
+worth stating where it departs from the 3D baselines it is evaluated alongside.
+U-Net-3D and Attention U-Net-3D apply isotropic $(3,3,3)$ convolutions
+throughout, and UNETR~\cite{hatamizadeh2022unetr} and
+SwinUNETR~\cite{hatamizadeh2022swin} attend across the temporal axis at every
+stage. Both families were designed for volumetric medical data, where that axis
+is a spatial depth of many strongly correlated slices; on a stack of one or two
+daily acquisitions it is short and weakly correlated. We therefore remove learned
+mixing along that axis entirely, combining across days only through global
+pooling in the SE modules and, for progression, a mean before the output head.}
+
 \paragraph*{Attention in U-Nets.} Squeeze-and-Excitation~\cite{hu2018squeeze} adds a lightweight channel-wise attention module that globally pools feature maps and produces per-channel gating weights. Roy et~al.~\cite{roy2018concurrent} extended this with concurrent spatial-channel SE for 2D semantic segmentation. Atrous Spatial Pyramid Pooling~\cite{chen2017rethinking}, later refined in DeepLabv3+~\cite{chen2018encoder}, aggregates multi-scale context via parallel dilated convolutions in the bottleneck. Both modules are standard in semantic segmentation, but their combination with spatial-only 3D convolutions for temporal-satellite tasks is, to our knowledge, new.
 
-\paragraph*{Data quality in remote-sensing benchmarks.} Prior work has documented label noise in land-cover benchmarks~\cite{pelletier2017assessing} and machine-learning test sets more broadly~\cite{northcutt2021pervasive}, showing that erroneous test labels can reorder benchmark rankings even when the underlying models are unchanged. \rev{Moreno-Ruiz et~al.~\cite{morenoruiz2020modis} document omission and commission errors in the MODIS burned-area products from which TS-SatFire's burned-area labels are partly derived, so label error in this benchmark is inherited as well as introduced. Our audit is in this tradition, and extends it in one respect: we find that the evaluation procedure, not only the labels, determines the reported ordering.}
+\paragraph*{Data quality in remote-sensing benchmarks.} Prior work has documented label noise in land-cover benchmarks~\cite{pelletier2017assessing} and machine-learning test sets more broadly~\cite{northcutt2021pervasive}, showing that erroneous test labels can reorder benchmark rankings even when the underlying models are unchanged. \rev{Moreno-Ruiz et~al.~\cite{morenoruiz2020modis} document omission and commission errors in the MODIS burned-area products from which TS-SatFire's burned-area labels are partly derived, so label error in this benchmark is inherited as well as introduced. Wildfire benchmarks are also exposed to a form of incompleteness that is easy to miss: their ground truth is the output of another automated product rather than human annotation, so a fire that the source product failed to detect appears as a scene with no positive pixels, indistinguishable at the file level from a scene where nothing burned, and it trains without error. Our audit is in this tradition.}
 
 \paragraph*{Sensor systems for wildfire monitoring in \emph{Sensors}.}
 A body of work published in the MDPI \emph{Sensors} journal is
@@ -288,7 +287,56 @@ the \emph{Sensors} literature.
 \label{sec:dataset}
 %%=============================================================
 
-TS-SatFire~\cite{zhao2025tssatfire} consists of a set of fire events, each represented by a multi-day temporal stack of VIIRS observations. Per event, every day has: a VIIRS\_Day GeoTIFF with eight spatial bands (six daytime reflectance and thermal bands plus two nighttime thermal bands), and a FirePred GeoTIFF with 19 auxiliary bands that capture static or semi-static fire-related features such as topography, land cover, and fuel descriptors (the released metadata does not name the bands individually, and we treat them as auxiliary covariates).
+TS-SatFire~\cite{zhao2025tssatfire} consists of a set of fire events, each represented by a multi-day temporal stack of VIIRS observations. Per event, every day has: a VIIRS\_Day GeoTIFF with eight spatial bands (six daytime reflectance and thermal bands plus two nighttime thermal bands), and a FirePred GeoTIFF with 19 auxiliary bands. \rev{The released rasters carry
+no band names, but the channel ordering is documented in the dataset
+publication~\cite{zhao2025tssatfire}, where the eight VIIRS bands and the
+nineteen auxiliary bands are enumerated as a single 27-channel sequence. We
+reproduce the correspondence in Table~\ref{tab:firepred} because it is required
+to interpret any per-band analysis and is easy to lose when the two rasters are
+read separately. The auxiliary bands fall into four groups: vegetation indices,
+current weather, terrain, and forecast weather.}
+
+
+\begin{table}[H]
+\centering
+\caption{\rev{Correspondence between FirePred band index, the 27-channel
+sequence of the dataset publication~\cite{zhao2025tssatfire}, and the variable
+represented. Bands 1--8 of the 27-channel sequence are the VIIRS reflectance and
+thermal channels supplied in the separate VIIRS\_Day raster.}}
+\label{tab:firepred}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}ccl@{}}
+\arrayrulecolor{hdrblue}
+\toprule
+\rowcolor{hdrblue}
+\color{white}\textbf{FirePred band} &
+\color{white}\textbf{Channel} &
+\color{white}\textbf{Variable} \\
+\midrule
+\rowcolor{rowA} 1  & 9  & NDVI \\
+\rowcolor{white} 2  & 10 & EVI \\
+\rowcolor{rowA} 3  & 11 & Total precipitation \\
+\rowcolor{white} 4  & 12 & Wind speed \\
+\rowcolor{rowA} 5  & 13 & Wind direction \\
+\rowcolor{white} 6  & 14 & Minimum temperature \\
+\rowcolor{rowA} 7  & 15 & Maximum temperature \\
+\rowcolor{white} 8  & 16 & Energy release component \\
+\rowcolor{rowA} 9  & 17 & Specific humidity \\
+\rowcolor{white} 10 & 18 & Slope \\
+\rowcolor{rowA} 11 & 19 & Aspect \\
+\rowcolor{white} 12 & 20 & Elevation \\
+\rowcolor{rowA} 13 & 21 & Palmer drought severity index \\
+\rowcolor{white} 14 & 22 & Land cover \\
+\rowcolor{rowA} 15 & 23 & Total precipitation, surface \\
+\rowcolor{white} 16 & 24 & Forecast wind speed \\
+\rowcolor{rowA} 17 & 25 & Forecast wind direction \\
+\rowcolor{white} 18 & 26 & Forecast temperature \\
+\rowcolor{rowA} 19 & 27 & Forecast specific humidity \\
+\arrayrulecolor{hdrblue}\bottomrule
+\end{tabular}
+\end{table}
+
+\rev{Probing 62 fires, only the two precipitation bands (3 and 15) are ever uniformly zero---in 12 and 5 fires respectively---which is expected for events burning through periods without rainfall, and indicates valid measurements rather than missing data.}
 
 \subsection{Labels}
 
@@ -299,12 +347,33 @@ The VIIRS\_Day GeoTIFF contains the label channels for all three tasks, encoded 
 \paragraph*{Burned Area labels.} Band 8 contains burned-area labels. Zhao et~al.~\cite{zhao2025tssatfire} describe how the BA labels are constructed --- as the union of accumulated VIIRS active-fire detections and NIFC perimeters, with case-by-case manual quality control on the test set. The dataset paper does not document the precise storage convention used in the released GeoTIFFs, which we found necessary to verify before any modelling: in practice, band 8 encodes the burned mask implicitly, with finite values in the range $[2{,}119,\,908{,}660]$ corresponding to Julian-day codes or perimeter identifiers and NaN values corresponding to unburned pixels. The correct binary extraction is therefore
 \begin{equation}
 \mathrm{BA}(p) = \mathbf{1}\bigl[\,\neg \mathrm{NaN}(\mathrm{band8}(p))\,\bigr]
+\label{eq:ba}
 \end{equation}
-and not a value threshold. Any future BA modelling on TS-SatFire must use this encoding.
+and not a value threshold, where $\mathbf{1}[\cdot]$ is the indicator function and
+$p$ ranges over the pixels of the raster.
+
+\rev{Equation~\ref{eq:ba} is worth stating explicitly because the natural first
+attempt fails silently. Band 8 is a floating-point raster whose finite entries
+are large integers---dates or identifiers---and whose unburned pixels are NaN
+rather than zero. A reader who assumes the band holds a probability or a class
+score will apply a threshold such as $\mathrm{band8}(p) > 0.5$; because every
+finite value exceeds any threshold in $[0,1]$ and NaN comparisons evaluate to
+false, this happens to return the correct mask, and the error goes unnoticed
+until a different threshold or a different comparison is used. Conversely,
+converting NaN to zero before comparison---as \texttt{numpy.nan\_to\_num} does,
+and as the reference loader does elsewhere---turns unburned pixels into valid
+zeros and silently changes the class balance. The information carried by band 8
+is therefore \emph{presence}, not \emph{magnitude}: a pixel is burned if and
+only if its entry is finite, and the numeric value encodes when or by which
+perimeter it burned, not how strongly. Every finite value we observed
+corresponds to a burned pixel; there are no finite non-burn entries. Any future
+burned-area or fire-progression work on TS-SatFire must use this encoding, and
+the derived progression target of Equation~\ref{eq:fp} inherits it.}
 
 \paragraph*{Fire Progression labels.} Fire progression labels are not stored directly. They are derived from consecutive BA masks: the FP label for day $T$ is the set of pixels burned on day $T+1$ but not on day $T$,
 \begin{equation}
 \mathrm{FP}(T) = \mathrm{BA}(T+1) \setminus \mathrm{BA}(T).
+\label{eq:fp}
 \end{equation}
 A window is usable only when both the last input day and the following day have valid (non-NaN) band 8.
 
@@ -320,6 +389,43 @@ is absent from the Kaggle distribution, so the replicable FP validation set
 contains 14 fires. The test set is a separate collection of 24 \texttt{US\_2021} 
 fires identified by geographic codes such as \texttt{US\_2021\_CA3451712013120211011}.
 
+\subsection{\rev{Spatial Coverage of the Centre Crop}}
+\label{sec:crop}
+
+\rev{TS-SatFire scenes are supplied at the full extent of each fire event, which
+in our copy of the dataset is $596 \times 595$ pixels for all but one event. As is
+standard practice in satellite segmentation pipelines, and as the reference
+implementation also does, we operate on a fixed $256 \times 256$ crop rather
+than the full scene, for memory reasons. A crop of this size retains
+approximately 19\% of the imaged area. The reference implementation places the
+crop at a 30\% offset from the scene origin; we centre it
+(Section~\ref{sec:protocol}).}
+
+\rev{This choice is not neutral, because fires are not centred within their
+scenes. We quantify the loss by counting, for every labelled positive pixel in
+each fire, whether it falls inside or outside the crop actually used. The
+results differ markedly between tasks. For active fire, a mean of 26.8\% of
+labelled fire pixels fall outside the crop. For burned area and fire
+progression, whose labels cover the accumulated extent of the event rather than
+the instantaneous front, the mean rises to 56.3\%, and for several fires the crop retains no
+labelled positive pixels at all. The most severe active-fire case loses 86.2\%
+of its labelled pixels; among the progression test fires, four lose more than
+87\% and one loses all of them.}
+
+\rev{The consequence is that for a substantial fraction of events the model is
+asked to predict a target that is largely absent from its input, and is scored
+on the discrepancy. This is a property of the evaluation setup rather than of
+any model, and it applies equally to every method evaluated under the same
+convention. Section~\ref{sec:fpresults} shows that the fraction of positive
+pixels lost to the crop predicts per-fire progression accuracy, and is a
+sufficient explanation for the low-scoring cases without appeal to fire
+behaviour. We report all results under the cropped protocol for consistency with
+the published baselines, and identify full-scene evaluation as necessary future
+work.}
+
+
+
+
 %%=============================================================
 \section{Label-Quality Audit}
 \label{sec:audit}
@@ -329,7 +435,7 @@ We audit every fire in every split of every task for label completeness. \rev{Mi
 
 \subsection{AF Audit}
 
-\rev{Table~\ref{tab:af_audit} summarises the AF audit.}
+\rev{Table~\ref{tab:audit_all} summarises the audit for all three tasks.}
 
 \rev{\textit{Fire level.} Of the 138 fires in the AF training pool, 18 have band~7
 entirely NaN across every available day and are excluded; one validation fire
@@ -367,13 +473,13 @@ of supervision.}
 
 \subsection{BA Audit}
 
-Table~\ref{tab:ba_audit} summarises the BA audit. 49 of 138 training fires are excluded from BA training: 14 have no \texttt{VIIRS\_Day} directory, 18 have band~8 entirely NaN across all days, and 17 have fewer than 50\% of days with usable labels. All 5 excluded validation fires have band~8 entirely NaN. The AF and BA exclusion lists overlap substantially: 19 fires are excluded from both tasks, while 3 AF-excluded fires retain valid BA labels and 49 BA-excluded fires retain valid AF labels.
+Table~\ref{tab:audit_all} includes the BA audit. 49 of 138 training fires are excluded from BA training: 14 have no \texttt{VIIRS\_Day} directory, 18 have band~8 entirely NaN across all days, and 17 have fewer than 50\% of days with usable labels. All 5 excluded validation fires have band~8 entirely NaN. The AF and BA exclusion lists overlap substantially: 19 fires are excluded from both tasks, while 3 AF-excluded fires retain valid BA labels and 49 BA-excluded fires retain valid AF labels.
 
 In addition to the missing-label audit, we also document the practical encoding of band 8 in the released GeoTIFFs. Zhao et~al.~\cite{zhao2025tssatfire} describe how the labels are produced (union of accumulated VIIRS active-fire detections and NIFC perimeters, with manual quality control on the test set) but do not specify the storage convention in the released rasters --- a small but important detail for downstream users. Empirically we find that finite values in band 8 span the range $[2{,}119,\,908{,}660]$, consistent with Julian-day codes or perimeter identifiers from the MCD64A1 MODIS burned-area product rather than a binary or thresholded indicator. $100\%$ of finite pixels are burned pixels; there are no finite non-burn values. The correct extraction of a binary BA mask is therefore presence-of-finite, as stated in Section~\ref{sec:dataset}. Documenting this encoding is a prerequisite for any future BA modelling on TS-SatFire.
 
 \subsection{FP Audit}
 
-Table~\ref{tab:fp_audit} summarises the FP audit. The FP audit is more subtle because FP labels are derived at the window level from consecutive BA masks. A fire is excluded if no usable window can be constructed, i.e., if it has zero consecutive (day $T$, day $T+1$) pairs in which both days have valid BA. 48 training fires and 6 validation fires fail this test. \rev{The submitted
+Table~\ref{tab:audit_all} includes the FP audit. The FP audit is more subtle because FP labels are derived at the window level from consecutive BA masks. A fire is excluded if no usable window can be constructed, i.e., if it has zero consecutive (day $T$, day $T+1$) pairs in which both days have valid BA. 48 training fires and 6 validation fires fail this test. \rev{The submitted
 version of this paper additionally excluded eight fires from the test set, on a
 stated criterion of burned-area fraction below $0.001\%$ inside the
 $256 \times 256$ crop. That criterion does not describe what was done: three of
@@ -384,71 +490,56 @@ no counts under micro-averaging; the remaining two are scored normally.}
 
 All exclusion lists are reported in full in the supplementary audit reports released with the repository.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
-\caption{Active Fire label audit. \rev{Fire-level exclusions only; a further
-143 training windows are rejected at day level.}}
-\label{tab:af_audit}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}lrrr@{}}
+\caption{\rev{Label audit across all tasks and splits. \emph{No dir.}: no
+VIIRS\_Day directory present. \emph{All NaN}: label band contains no finite pixel
+on any day. \emph{$<$50\% days}: label band finite on fewer than half the
+available days. The adopted fire-level criterion excludes the first two
+categories only; the third is reported for the sensitivity analysis of
+Section~\ref{sec:audit} and those fires are retained, with unlabelled windows
+rejected individually.}}
+\label{tab:audit_all}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}llrrrrrr@{}}
 \arrayrulecolor{hdrblue}
 \toprule
 \rowcolor{hdrblue}
+\color{white}\textbf{Task} &
 \color{white}\textbf{Split} &
 \color{white}\textbf{Total} &
-\color{white}\textbf{Usable} &
-\color{white}\textbf{Excluded} \\
+\color{white}\textbf{No dir.} &
+\color{white}\textbf{All NaN} &
+\color{white}\textbf{$<$50\% days} &
+\color{white}\textbf{Excl.} &
+\color{white}\textbf{Usable} \\
 \midrule
-\rowcolor{rowA} Train & 138 & \rev{120} & \rev{18} \\
-\rowcolor{white} Val   & 13  & 12  & 1  \\
-\rowcolor{rowA}  Test  & 17  & 15  & 2 (Calf~Canyon, Mosquito) \\
+\rowcolor{rowA} AF & train      & 137 & 13 & 4  & 3 & 17 & 120 \\
+\rowcolor{white} AF & val        & 14  & 1  & 1  & 0 & 2  & 12  \\
+\rowcolor{rowA} AF & test        & 17  & 0  & 2  & 1 & 2  & 15  \\
+\midrule
+\rowcolor{white} BA & train      & 137 & 13 & 18 & 17 & 31 & 106 \\
+\rowcolor{rowA} BA & val         & 14  & 1  & 5  & 0  & 6  & 8   \\
+\rowcolor{white} BA & test (AF)   & 17  & 0  & 7  & 1  & 7  & 10  \\
+\rowcolor{rowA} BA & test (US\_2021) & 24 & 0 & 2 & 4 & 2 & 22 \\
+\midrule
+\rowcolor{white} FP & train      & 137 & --- & --- & --- & 48 & 89 \\
+\rowcolor{rowA} FP & val         & 14  & --- & --- & --- & 6  & 8  \\
+\rowcolor{white} FP & test        & 24  & --- & --- & --- & 6  & 18 \\
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[H]
-\centering
-\caption{Burned Area label audit.}
-\label{tab:ba_audit}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}lrrr@{}}
-\arrayrulecolor{hdrblue}
-\toprule
-\rowcolor{hdrblue}
-\color{white}\textbf{Split} &
-\color{white}\textbf{Total} &
-\color{white}\textbf{Usable} &
-\color{white}\textbf{Excluded} \\
-\midrule
-\rowcolor{rowA} Train & 138 & 89  & 49 \\
-\rowcolor{white} Val   & 13  & 8   & 5  \\
-\rowcolor{rowA}  Test  & 24 US\_2021 & 18  & 6  \\
-\arrayrulecolor{hdrblue}\bottomrule
-\end{tabular}
-\end{table}
+\rev{Two conventions require comment. The AF and BA training pools are given as
+137 rather than 138 because fire \texttt{22713339}, listed in the AF/BA training
+split, is reassigned to fire-progression validation by the dataset paper; under
+the 138-fire convention used by our training pipeline the same audit excludes 18
+fires and retains 120. Fire-progression exclusions are counted at the window
+level rather than the band level: a fire is unusable when no consecutive
+$(T, T{+}1)$ pair has valid burned-area labels on both days, so the three
+band-level columns do not apply. All exclusion lists are released in full with
+the code.}
 
-\begin{table}[H]
-\centering
-\caption{Fire Progression label audit. \rev{All 24 test fires are reported in
-Section~\ref{sec:experiments}; the six without a usable window contribute no
-counts under micro-averaging.}}
-\label{tab:fp_audit}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}lrrr@{}}
-\arrayrulecolor{hdrblue}
-\toprule
-\rowcolor{hdrblue}
-\color{white}\textbf{Split} &
-\color{white}\textbf{Total} &
-\color{white}\textbf{Usable} &
-\color{white}\textbf{Excluded} \\
-\midrule
-\rowcolor{rowA} Train & 137 & 89 & 48 \\
-\rowcolor{white} Val   & 14 (Kaggle) & 8  & 6 (no usable window) \\
-\rowcolor{rowA}  Test  & 24 US\_2021 & \rev{18} & \rev{6 (no usable window)} \\
-\arrayrulecolor{hdrblue}\bottomrule
-\end{tabular}
-\end{table}
 
 
 \FloatBarrier
@@ -499,7 +590,7 @@ The Dice term directly optimises the F1 surrogate; the Focal term handles the he
 
 \subsection{FP Variant}
 
-The FP variant takes a 27-channel input: the 8 VIIRS bands, 18 FirePred auxiliary bands \rev{(band 3 is excluded: it is identically zero in the fire used to probe the band layout, and we retain the exclusion for consistency across runs)}, and 1 cumulative burned-area mask computed from all days up to $T$. The encoder follows the same four-stage schedule $[64, 128, 256, 512]$, but is preceded by a dedicated input-projection layer $\mathrm{Conv3d}(27, 64, (1, 3, 3)) \to \mathrm{BN} \to \mathrm{GELU}$ that mixes the heterogeneous input channels before the first encoder block. The full architecture is shown in Fig.~\ref{fig:fp_arch}.
+The FP variant takes a 27-channel input: the 8 VIIRS bands, 18 FirePred auxiliary bands \rev{(band 3, total precipitation, is excluded)}, and 1 cumulative burned-area mask computed from all days up to $T$. \rev{The exclusion was made after observing that this band was identically zero in the fire used to probe the raster layout; the wider probe reported in Section~\ref{sec:dataset} shows it to be zero in 12 of 62 fires and informative in the remainder, so restoring it is an obvious first step for future work.} The encoder follows the same four-stage schedule $[64, 128, 256, 512]$, but is preceded by a dedicated input-projection layer $\mathrm{Conv3d}(27, 64, (1, 3, 3)) \to \mathrm{BN} \to \mathrm{GELU}$ that mixes the heterogeneous input channels before the first encoder block. The full architecture is shown in Fig.~\ref{fig:fp_arch}.
 
 \paragraph*{ResBlock3D (FP).} The FP residual block (Fig.~\ref{fig:resblock}, right) differs from the AF block in two ways. First, GELU~\cite{hendrycks2016gaussian} replaces ReLU as the activation; empirically we found that the sparser loss landscape of the FP objective benefits from the smoother gradient of GELU. Second, there is no Dropout3D~\cite{srivastava2014dropout} inside the block: on the much smaller effective FP training set (89 fires, with sparse window-level positives), Dropout hurt convergence. The skip connection also drops the BatchNorm on the projection to keep the residual path closer to identity.
 
@@ -561,58 +652,65 @@ and per-seed outputs are released with the code.}
 
 \rev{All baseline figures in this paper are quoted from
 Zhao et~al.~\cite{zhao2025tssatfire}; we did not retrain or re-evaluate them.
-Since our evaluation was implemented independently, we first ask whether the two
-sets of numbers measure the same quantity. They do not.}
+Our own evaluation was implemented independently, and both works measure the
+same two tasks. The scoring procedures differ, however, and this section
+documents how, so that the figures we report are interpreted correctly.}
 
-\rev{The clearest evidence needs no code. For metrics accumulated over a pixel
-population, F1 and the Jaccard index are related by a deterministic identity,}
+\rev{The difference is visible in the reported metrics themselves. For metrics
+accumulated over a pixel population, F1 and the Jaccard index are related by a
+deterministic identity,}
 
 \begin{equation}
 \rev{\mathrm{IoU} = \frac{\mathrm{F1}}{2 - \mathrm{F1}},}
 \label{eq:iou_identity}
 \end{equation}
 
-\rev{which our own measurements satisfy to four decimal places on both tasks.
-Every published TS-SatFire pair violates it, always in the same direction:
-SwinUNETR-3D at TS = 2 reports F1 = 0.823, implying IoU = 0.699 against a
-reported 0.727; U-Net-3D at TS = 6 reports F1 = 0.375, implying 0.231 against a
-reported 0.338. A one-sided violation of this form is the signature of averaging
-a convex function of per-unit counts rather than aggregating counts first. This
-is a property of the aggregation, not a transcription error, and it means the
-published pairs and ours are different quantities.}
+\rev{which our own measurements satisfy to four decimal places. The published
+pairs are related differently---SwinUNETR-3D at TS = 2 reports F1 = 0.823 with
+IoU = 0.727, where the identity would give 0.699---which indicates that the two
+works aggregate per-pixel counts differently: averaging a score computed per
+frame and per fire, rather than accumulating counts and computing the metric
+once. Both are legitimate choices, but they yield different quantities, and
+figures computed under one should not be compared directly with figures computed
+under the other.}
 
-\rev{Reading the reference implementation confirms the mechanism and reveals
-seven further differences (Table~\ref{tab:protocol_diff}). Two are substantive
-beyond aggregation. The \texttt{zero\_division} convention awards a perfect
-score to any frame with empty ground truth---including the two test fires that
-carry no active-fire annotation at all (Section~\ref{sec:audit}), so a model is
-credited for scenes on which it cannot be evaluated. And the AF label rule
-differs in what counts as fire: \texttt{nan\_to\_num}(band 7) $> 0$ admits any
-non-zero confidence value, whereas the VIIRS documentation~\cite{schroeder2014new}
-places the low-confidence boundary at 7.}
+\rev{Reading the reference implementation identifies seven further differences
+(Table~\ref{tab:protocol_diff}). Most are stated in the dataset
+publication~\cite{zhao2025tssatfire}---the replacement of missing values with
+zeros, the test-set sampling interval, the construction of the burned-area and
+progression labels---and are choices we depart from rather than omissions. Two
+are not stated there and are recoverable only from the released code: the
+aggregation described above, and the convention that frames with empty ground
+truth are scored 1.0 rather than omitted, which affects the two test fires
+carrying no active-fire annotation (Section~\ref{sec:audit}). We note these not
+as errors but because a reader cannot reproduce the published figures without
+them.}
 
 \begin{table}[H]
 \centering
 \caption{\rev{Differences between the TS-SatFire reference evaluation and the
-protocol used in this work.}}
+protocol used in this work. \emph{Doc.}: the convention is stated in the dataset
+publication~\cite{zhao2025tssatfire}; differences so marked are design choices we
+depart from, not omissions.}}
 \label{tab:protocol_diff}
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}p{2.5cm}p{5.0cm}p{4.4cm}@{}}
+\begin{tabular}{@{}p{2.2cm}p{4.5cm}p{3.9cm}c@{}}
 \arrayrulecolor{hdrblue}
 \toprule
 \rowcolor{hdrblue}
 \color{white}\textbf{Aspect} &
 \color{white}\textbf{Reference implementation} &
-\color{white}\textbf{This work} \\
+\color{white}\textbf{This work} &
+\color{white}\textbf{Doc.} \\
 \midrule
-\rowcolor{rowA} Aggregation & per-frame F1, averaged over frames, then fires & counts accumulated over all pixels, metric computed once \\
-\rowcolor{white} Empty ground truth & scored 1.0 (\texttt{zero\_division=1.0}) & contributes no counts \\
-\rowcolor{rowA} AF label rule & \texttt{nan\_to\_num}(band 7) $> 0$ & band 7 $\geq 7$ \\
-\rowcolor{white} FP target & accumulated active fire, or its union with burned area, selected per fire by \texttt{label\_sel} & $\mathrm{clip}(\mathrm{BA}(T{+}1) - \mathrm{BA}(T), 0, 1)$ \\
-\rowcolor{rowA} Spatial crop & 30\% offset & centred \\
-\rowcolor{white} NaN in band 8 & counted as burned & treated as unburned \\
-\rowcolor{rowA} Threshold & fixed at 0.5 & selected on validation \\
-\rowcolor{white} Test stride & stride = TS; all $T$ frames scored & stride 1, final frame scored \\
+\rowcolor{rowA} Aggregation & per-frame F1, averaged over frames, then fires & counts accumulated over all pixels, metric computed once & --- \\
+\rowcolor{white} Empty ground truth & scored 1.0 (\texttt{zero\_division=1.0}) & contributes no counts & --- \\
+\rowcolor{rowA} AF label rule & \texttt{nan\_to\_num}(band 7) $> 0$ & band 7 $\geq 7$ & \checkmark \\
+\rowcolor{white} FP target & accumulated active fire, or its union with burned area, selected per fire & $\mathrm{clip}(\mathrm{BA}(T{+}1) - \mathrm{BA}(T), 0, 1)$ & \checkmark \\
+\rowcolor{rowA} Spatial crop & 30\% offset & centred & --- \\
+\rowcolor{white} Missing values & replaced with zeros & NaN retained as unlabelled & \checkmark \\
+\rowcolor{rowA} Threshold & fixed at 0.5 & selected on validation & --- \\
+\rowcolor{white} Test stride & stride = TS; all $T$ frames scored & stride 1, final frame scored & \checkmark \\
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
@@ -645,12 +743,11 @@ protocol; model weights fixed throughout.}}
 \end{tabular}
 \end{table}
 
-\rev{Protocol choices thus move F1 by 0.10 on fixed weights---several times the
-spread separating the twelve published baselines from one another
-(0.713--0.823). Rankings on this benchmark are therefore not robust to
-evaluation convention, and our own figures are not directly comparable to the
-published values. We report them under the protocol stated below and do not
-present them as improvements.}
+\rev{Scoring convention thus moves F1 by 0.10 on fixed weights, a range
+comparable to that separating the twelve published baselines (0.713--0.823). Our
+figures and the published ones are therefore not directly comparable, and we
+report ours under the protocol stated below without presenting them as
+improvements.}
 
 % ---------------------------------------------------------------------
 % TODO: reproducibility paragraph. Blocked on one check in
@@ -663,10 +760,9 @@ present them as improvements.}
 % ---------------------------------------------------------------------
 
 \rev{We evaluated our model under the reference protocol rather than retraining
-the baselines under ours because a reimplementation would introduce our own
-training choices as confounds, whereas holding fixed weights and varying only
-the measurement isolates the protocol effect. A full retraining study under a
-common protocol remains valuable future work.}
+the baselines under ours, since a reimplementation would introduce our own
+training choices as confounds; retraining all baselines under a single protocol
+remains valuable future work.}
 
 \rev{All results below therefore use: counts accumulated over all pixels with
 the metric computed once; unannotated fires excluded and reported separately
@@ -682,13 +778,11 @@ code.}
 
 \rev{Table~\ref{tab:af_results} reports our test-set F1 and IoU at TS = 1 and
 TS = 2 alongside the twelve baselines of the dataset
-paper~\cite{zhao2025tssatfire}. The two groups are separated because they are
-not computed under a common protocol (Section~\ref{sec:protocol}): the baseline
-figures are reproduced as published, under the reference evaluation, while ours
-are micro-averaged over the 15 annotated test fires at a validation-selected
-threshold. The table is therefore a summary of the published landscape next to
-an independently measured result, not a ranking, and we draw no comparative
-conclusion from it.}
+paper~\cite{zhao2025tssatfire}. The two groups are listed separately because
+they are scored differently (Section~\ref{sec:protocol}): the baseline figures
+are reproduced as published, while ours are micro-averaged over the 15 annotated
+test fires at a validation-selected threshold. The table places the published
+landscape next to an independently measured result; it is not a ranking.}
 
 \rev{Under our protocol, SpaSE-UNet3D reaches F1 = \afTStwo{} at TS = 2 over
 \nseedAF{} independent runs, and F1 = \afTSone{} at TS = 1. The difference
@@ -699,7 +793,14 @@ this equivalence is not uniform: individual fires shift by up to 0.022 in either
 direction between TS = 1 and TS = 2, with the largest losses on the
 weakest-signal events (Swedish, Blue Ridge). The second day therefore appears to
 add and remove information in roughly equal measure, which is consistent with
-there being little fire-specific signal in the additional frame.}
+there being little fire-specific signal in the additional frame. The same
+tendency appears in the dataset paper's own ablation on window length, where
+SwinUNETR-3D improves monotonically on active fire as the window shortens
+(0.783 at TS = 6, 0.803 at TS = 4, 0.823 at TS = 2), which the authors attribute
+to the additional temporal information not being effectively
+used~\cite{zhao2025tssatfire}. Our architecture is a direct response to that
+observation: if the extra frames are not exploited, the capacity allocated to
+mixing them is better spent elsewhere.}
 
 \begin{table}[H]
 \centering
@@ -751,15 +852,27 @@ achievable on the test set, so no advantage accrues from the selection
 procedure; we report the test sweep as evidence of robustness only, and it plays
 no part in selection.}
 
-\rev{Validation F1 rises
+\rev{Training behaviour is shown in Fig.~\ref{fig:curves}. Validation F1 rises
 above 0.80 within the first ten epochs and then oscillates as the operating
 point shifts between precision- and recall-favouring regimes, stabilising as the
 OneCycle schedule anneals the learning rate. Training and validation loss remain
-closely coupled throughout, with no divergence indicative of overfitting. The
-precision--recall panel is the empirical basis for the audit of
-Section~\ref{sec:audit}: recall sits near 0.80 across training while precision
-oscillates widely, the asymmetry expected when some training windows are
-supervised by all-negative targets derived from unannotated scenes.}
+closely coupled throughout, with no divergence indicative of overfitting. Panel
+(c) is the empirical basis for the audit of Section~\ref{sec:audit}: recall sits
+near 0.80 for much of training while precision oscillates widely, the asymmetry
+expected when some training windows are supervised by all-negative targets
+derived from unannotated scenes.}
+
+\begin{figure}[H]
+\centering
+\input{figs/af_ts2_curves_new.tex}
+\caption{\rev{Training behaviour of the AF variant at TS = 2 for a
+representative run. (a) Training and validation loss remain closely coupled.
+(b) Validation F1 rises above 0.80 within ten epochs and then oscillates as the
+operating point moves. (c) Validation precision and recall: recall is the
+binding constraint for much of training, which is the behaviour the label audit
+of Section~\ref{sec:audit} addresses.}}
+\label{fig:curves}
+\end{figure}
 
 The aggregate test F1 is informative but masks per-fire variability. Fig.~\ref{fig:af_per_fire} breaks down test F1 across the 15 \rev{annotated} test fires. 14 of 15 fires reach F1 $\geq 0.792$, and the median fire \rev{(\textit{Double Creek})} reaches F1 = \rev{0.850}. \rev{Eight fires exceed F1 = 0.85.} The single outlier is the low-intensity \textit{Blue~Ridge} fire at F1 = 0.746; manual inspection of its VIIRS scenes shows that the active-fire signal is faint, often confined to a single pixel, and consistently obscured by smoke plumes that drift from neighbouring confirmed-fire pixels.
 
@@ -815,77 +928,32 @@ VIIRS day scene: \textcolor{red}{red}\,=\,true positive, \textcolor{green!60!bla
 \label{fig:af_overlays}
 \end{figure}
 
-\subsubsection{\rev{Measured Effect of the Label Audit}}
+\paragraph*{\rev{Impact of the audit.}}
 \label{sec:auditeffect}
-
-\rev{The submitted version of this paper attributed a gain of $+0.037$ F1 to the
-label audit, comparing an audited model against an earlier unaudited one. That
-comparison was confounded: the two models differed in training configuration as
-well as in data filtering. We therefore ran a controlled experiment in which two
-models differ in exactly one respect---whether windows drawn from unannotated
-days are retained with all-negative targets, reproducing the effect of reading a
-NaN label band through \texttt{nan\_to\_num}---with architecture,
-initialisation, schedule, sampling and threshold procedure held fixed.}
-
-\begin{table}[H]
-\centering
-\caption{\rev{Effect of label filtering on AF, all other factors held constant.
-Single run per condition at a fixed threshold; not directly comparable to
-Table~\ref{tab:af_results}.}}
-\label{tab:audit_effect}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}lrrrr@{}}
-\arrayrulecolor{hdrblue}
-\toprule
-\rowcolor{hdrblue}
-\color{white}\textbf{Condition} &
-\color{white}\textbf{Train windows} &
-\color{white}\textbf{Val F1} &
-\color{white}\textbf{Test F1} &
-\color{white}\textbf{Test IoU} \\
-\midrule
-\rowcolor{rowA} Audited   & 1{,}719 & 0.8208 & 0.8533 & 0.7441 \\
-\rowcolor{white} Unaudited & 1{,}790 & 0.8192 & 0.8514 & 0.7412 \\
-\arrayrulecolor{hdrblue}\bottomrule
-\end{tabular}
-\end{table}
-
-\rev{The audited model is better on both validation and test, but by 0.0019 F1
----an order of magnitude smaller than the figure claimed in the submitted
-version, which we withdraw. The explanation is in the window counts. Day-level
-filtering (Section~\ref{sec:audit}) already rejects any window whose final day
-lacks a label, and the AF label refers to that final day; a fire with no
-annotation on any day therefore contributes almost nothing even when it is not
-excluded at fire level. Only 71 of 1{,}790 windows, or 4.0\%, differ between the
-two conditions.}
-
-\rev{This is a result about the interaction of the two filtering levels rather
-than about the audit's value, and it has a practical consequence: the day-level
-filter does most of the work. A practitioner who verifies labels at day level
-obtains most of the benefit without any fire-level audit. A pipeline with
-neither---one that converts NaN label bands to zeros and trains on every window,
-as the reference loader does by default---is the configuration in which the
-failure mode appears at full magnitude.}
-
-\rev{The audit's contribution is therefore not an accuracy gain, and we no
-longer present it as one. It is that two of the seventeen AF test fires cannot
-be scored at all, so that any full-split aggregate is partly a statement about
-the empty-ground-truth convention; that the burned-area label encoding is
-undocumented and cannot be recovered by inspection alone; and that the
-all-negative supervision mechanism is real, its measured cost here being small
-only because of the day-level filter that neutralises it. Reporting the measured
-value in place of the claimed one is, we think, the more useful contribution.}
+\rev{To isolate the effect of label filtering we trained two models differing in
+exactly one respect---whether windows drawn from unannotated days are retained
+with all-negative targets---with all other settings held fixed. The audited model
+reaches test F1 = 0.8533 against 0.8514 for the unaudited one, a difference of
+0.0019. This is an order of magnitude smaller than the figure reported in the
+submitted version, which compared models that also differed in training
+configuration; we correct it here. The explanation is that day-level filtering
+(Section~\ref{sec:audit}) already rejects any window whose final day lacks a
+label, so only 71 of 1{,}790 windows differ between the two conditions. The
+practical implication is that day-level verification does most of the work, and
+that the failure mode appears at full magnitude only in a pipeline with neither
+filter. The value of the audit lies elsewhere: two of the seventeen AF test fires
+carry no annotation and cannot be scored, so any full-split aggregate depends for
+those fires on the empty-ground-truth convention rather than on the model.}
 
 \subsection{Fire Progression Results}
 \label{sec:fpresults}
 
 
-\rev{Fire progression is evaluated on the full official test set of 24 US\_2021
-fires. The submitted version reported a 16-fire subset, excluding eight fires on
-a stated criterion of burned-area fraction below 0.001\%. That criterion does not
-describe what was done---three of the eight exceed it, and the boundary is
-non-monotone---so rather than repair it we remove the exclusion entirely and
-report all 24 fires. This costs 0.019 F1 relative to the subset.}
+\rev{Following the reviewers' request, fire progression is now evaluated on the
+full official test set of 24 US\_2021 fires rather than the 16-fire subset of the
+submitted version. The exclusion criterion stated there did not match the
+selection actually applied, so we remove it rather than restate it. Reporting all
+24 fires costs 0.019 F1 relative to the subset.}
 
 \rev{Table~\ref{tab:fp_results} reports our result alongside the five published
 FP baselines. As in Section~\ref{sec:protocol}, the two groups are separated and
@@ -925,15 +993,24 @@ figures are measured under the protocol of Section~\ref{sec:protocol} over
 \end{tabular}
 \end{table}
 
-\rev{Run-to-run variance is the more important quantity here. Across
-\nseedFP{} runs differing only in random seed, test F1 on the full test set has
-a standard deviation of \fpSD{}, against a range of 0.021
-separating the five published baselines from one another. The seed noise of a
-single architecture is therefore of the same order as, or larger than, the
-entire spread between architectures, and single-run comparisons on this task
-cannot reliably distinguish them. This applies to our own results as much as to
-any other: the figure reported in the submitted version was one draw from this
-distribution.}
+\rev{Run-to-run variance is worth reporting alongside the aggregate, and is
+informative in a way we did not anticipate. Across \nseedFP{} runs differing
+only in random seed, our test F1 on the full test set has a standard deviation
+of \fpSD{}. Zhao et~al.~\cite{zhao2025tssatfire} also report a seed study on
+this task, over the same seeds, and obtain a standard deviation of 0.003---an
+order of magnitude smaller. Since both studies vary only the random seed, the
+difference is attributable to how per-pixel counts are turned into a reported
+score: averaging a metric computed per frame and per fire concentrates the
+distribution, whereas accumulating counts across the whole test set does not.
+Aggregation therefore affects the dispersion of a reported figure as well as its
+value, which is a further reason to read the two sets of numbers separately.}
+
+\rev{Under our own aggregation the implication is that seed noise (\fpSD{}) is
+of the same order as the range separating the five published fire-progression
+baselines from one another (0.021), so a single run measured this way would not
+reliably distinguish them. This applies to our own results first of all: the
+figure reported in the submitted version was one draw from this distribution,
+and we give the mean and standard deviation here in its place.}
 
 \rev{Instability is visible during training as well. The epoch of best
 validation F1 varied by more than twenty epochs across runs while validation F1
@@ -951,13 +1028,15 @@ unmodified at test time; the same value was selected in all runs. Validation F1
 and IoU rise gently and monotonically over $[0.05, 0.75]$ with no sharp peak, so
 the choice is not critical.}
 
-\rev{Aggregate performance conceals wide per-fire variation
-(Fig.~\ref{fig:fp_per_fire}). The submitted version attributed the low-scoring
+\rev{Aggregate performance conceals wide per-fire variation. Fig.~\ref{fig:fp_per_fire}
+shows the per-fire breakdown for a representative run over 16 of the test fires;
+the spread, from below 0.01 to above 0.53, is the feature of interest rather
+than any individual value. The submitted version attributed the low-scoring
 cases to stochastic ember activity rather than coherent flame-front propagation;
 that explanation was speculative, and measurement identifies a concrete and
 sufficient cause instead: truncation of the fire by the $256 \times 256$ crop.
 Across the progression test set a mean of 56.3\% of labelled positive pixels
-fall outside the crop, reaching 92.7\% in the worst case. Per-fire F1 correlates strongly and negatively with
+fall outside the crop (Section~\ref{sec:crop}). Per-fire F1 correlates strongly and negatively with
 the fraction of positive pixels lost to the crop (Spearman $\rho = -0.685$,
 $p = 0.0034$). Fires scoring below 0.375 lose on average 66.7\% of their
 positive pixels to the crop; those scoring above lose 34.6\%. A model asked to
@@ -968,22 +1047,36 @@ total with a progression increment occupying less than 0.01\% of the crop; the
 model returns near-zero probability across the scene, which is the correct
 response to the input it is given, and is scored close to zero for it.}
 
-\rev{Centre-cropping is a near-universal convention in satellite segmentation
-pipelines, adopted for memory reasons; on this dataset it discards the majority
-of the progression signal. Any comparison of fire-progression models on
-TS-SatFire is therefore partly a comparison of how each handles fires whose
-fronts have been cropped away. Full-scene evaluation is necessary future work;
-it was not performed here, since our results were produced under the cropped
-protocol and would not be comparable to them.}
+\rev{Centre-cropping is a standard convention adopted for memory reasons, but on
+this dataset it discards the majority of the progression signal, so per-fire
+scores partly reflect how much of each fire survives the crop. Full-scene
+evaluation is left to future work.}
+
+\begin{figure}[H]
+\centering
+\input{figs/fp_crop.tex}
+\caption{\rev{Per-fire fire-progression F1 against the fraction of labelled
+positive pixels falling outside the $256 \times 256$ centre crop
+(Section~\ref{sec:crop}), for the 16 fires of Fig.~\ref{fig:fp_per_fire}. Fires
+whose extent is largely cropped away score poorly regardless of model
+behaviour; Spearman $\rho = -0.685$, $p = 0.0034$, $n = 16$.}}
+\label{fig:fp_crop}
+\end{figure}
 
 \begin{figure}[H]
 \centering
 \input{figs/fp_per_fire.tex}
-\caption{Per-fire test F1 for SpaSE-UNet3D on the US\_2021 test fires, sorted by F1. \rev{Fires without a usable progression window contribute no counts and are omitted from the chart; the aggregate in Table~\ref{tab:fp_results} is over all 24 official test fires. No baseline reference line is shown, for the reasons given in Section~\ref{sec:protocol}.}}
+\caption{\rev{Per-fire test F1 for SpaSE-UNet3D on 16 of the US\_2021 test
+fires, one representative run, sorted by F1. The chart is shown to illustrate
+the spread between events rather than to reproduce an aggregate: the headline
+figures in Table~\ref{tab:fp_results} are means over \nseedFP{} runs on all 24
+official test fires, of which six carry no usable progression window and
+therefore contribute no counts. No baseline reference line is drawn, for the
+reasons given in Section~\ref{sec:protocol}.}}
 \label{fig:fp_per_fire}
 \end{figure}
 
-To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for \rev{the test fires with a usable window}, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model propagates the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain and weather covariates. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) rather than a complete shape mismatch. The lower-F1 fires reveal the dominant failure mode identified above: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop, so that a single mispredicted patch dominates the score. \rev{These cases motivate reporting per-fire F1 alongside the aggregate, since a single truncated fire can shift the micro-averaged figure disproportionately.}
+To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for \rev{16 test fires from a single run}, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model propagates the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain and weather covariates. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) rather than a complete shape mismatch. The lower-F1 fires reveal the dominant failure mode identified above: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop, so that a single mispredicted patch dominates the score. \rev{These cases motivate reporting per-fire F1 alongside the aggregate, since a single truncated fire can shift the micro-averaged figure disproportionately.}
 
 \begin{figure}[!tbp]
 \centering
@@ -1021,10 +1114,16 @@ CA-3451 & 0.373 & MT-4579 & 0.371 & ID-4663 & 0.365 & WA-4877 & 0.310 \\
 ID-4762 & 0.208 & CA-3627 & 0.204 & WA-4879 & 0.153 & CA-4086 & 0.007 \\
 \bottomrule
 \end{tabular}}
-\caption{FP prediction maps for the US\,2021 test fires with a usable progression window, sorted by F1 from
-top-left to bottom-right. Each panel overlays the predicted progression mask on the
-VIIRS day scene: \textcolor{red}{red}\,=\,true positive, \textcolor{green!60!black}{green}\,=\,false positive,
-\textcolor{blue}{blue}\,=\,false negative. Per-fire F1 scores are listed in the table above.}
+\caption{\rev{Qualitative fire-progression predictions for 16 US\,2021 test
+fires from a single run, sorted by F1 from top-left to bottom-right. The panels
+are illustrative of the model's spatial behaviour and are not the population
+over which the reported metrics are computed; those are given in
+Table~\ref{tab:fp_results} over all 24 official test fires.} Each panel overlays
+the predicted progression mask on the VIIRS day scene:
+\textcolor{red}{red}\,=\,true positive,
+\textcolor{green!60!black}{green}\,=\,false positive,
+\textcolor{blue}{blue}\,=\,false negative. Per-fire F1 scores are listed in the
+table above.}
 \label{fig:fp_maps}
 \end{figure}
 
@@ -1091,121 +1190,82 @@ per arm.}}
 \end{table}
 
 \rev{Run-to-run standard deviation on the full configuration is
-$\sigma = 0.0009$. Every reduced configuration falls within $1.6\sigma$ of it,
-and the three reduced arms lie within 0.0024 of one another---a range comparable
-to the variability of a single configuration retrained. At this sample size the
-experiment cannot separate the components, and we therefore make no claim that
-any individual component improves accuracy. In particular, the submitted
-version's assertion that full $(3,3,3)$ convolutions reduce validation F1 is not
-supported by this measurement, and we withdraw it; we likewise do not claim an
-accuracy benefit for SE attention or deep supervision, both of which scored
-marginally higher in their single reduced run. Each reduced arm was trained
-once, so these differences are point estimates without variance of their own,
-and a claim in either direction would require repeated runs per arm.}
+$\sigma = 0.0009$, and every reduced configuration falls within $1.6\sigma$ of
+it. At this sample size the experiment cannot separate the components, and we
+make no claim that any individual component improves accuracy; in particular,
+the submitted version's assertion that full $(3,3,3)$ convolutions reduce
+validation F1 is not supported and we withdraw it. Each reduced arm was trained
+once, so these are point estimates and a claim in either direction would require
+repeated runs per arm.}
 
-\rev{The comparison that is unambiguous at this sample size concerns cost rather
-than accuracy. Replacing spatial-only kernels with full $(3,3,3)$ kernels
-increases the parameter count from 32.88\,M to 89.36\,M---a factor of
-$2.72$---while validation F1 remains within $1.1\sigma$. On observation windows
-of one to two days, the additional temporal-mixing capacity is therefore not
-converted into performance, and the factorised alternative achieves the same
-result at substantially lower cost. This supports the parameter-efficiency half
-of the finding reported in the action-recognition
-literature~\cite{tran2018closer,qiu2017learning}, not the accuracy half. The SE
-modules account for 0.44\,M parameters, or 1.3\% of the model, so whatever their
-contribution it is obtained at negligible cost.}
+\rev{The comparison that is unambiguous concerns cost rather than accuracy.
+Replacing spatial-only kernels with full $(3,3,3)$ kernels raises the parameter
+count from 32.88\,M to 89.36\,M, a factor of $2.72$, while validation F1 remains
+within $1.1\sigma$; the SE modules account for 0.44\,M parameters, or 1.3\% of
+the model. On one- to two-day windows the additional temporal-mixing capacity is
+therefore not converted into performance, which supports the
+parameter-efficiency half of the finding reported in the action-recognition
+literature~\cite{tran2018closer,qiu2017learning} rather than the accuracy half.}
 
-\rev{We did not ablate the fire-progression variant. Section~\ref{sec:fpresults}
-establishes a run-to-run standard deviation of \fpSD{} on that task, far larger
-than any plausible single-component effect, so a single-run ablation of the ASPP
-bottleneck, the activation, the dropout removal or the cumulative burned-area
-channel would be uninterpretable. We state the FP design choices in
-Section~\ref{sec:method} as what they are---decisions made sequentially on a
-single validation split of eight usable fires, without nested
-cross-validation---and identify a properly powered ablation as necessary future
-work. This applies with particular force to the cumulative burned-area input
-channel, which provides information some baselines may not receive; we note that
-the reference fire-progression pipeline likewise aggregates its thermal channels
-by cumulative maximum over the observation window, so cumulative history is not
-unique to our formulation, but we have not measured the channel's contribution
-and do not claim it is unimportant.}
+\rev{We did not ablate the fire-progression variant: the run-to-run standard
+deviation of \fpSD{} on that task (Section~\ref{sec:fpresults}) is far larger
+than any plausible single-component effect, so a single-run ablation would be
+uninterpretable. The FP design choices were made sequentially on a validation
+split of eight usable fires without nested cross-validation, and a properly
+powered ablation---including of the cumulative burned-area input channel, which
+provides information some baselines may not receive---remains future work.}
 
 %%=============================================================
 \section{Discussion}
 \label{sec:discussion}
 %%=============================================================
 
-\rev{The results above support four claims, stated with the strength the
+\rev{The results above support three claims, stated with the strength the
 evidence allows.}
 
-\paragraph*{\rev{Evaluation convention, not only architecture, determines
-reported rankings.}} \rev{Applying the reference protocol to fixed model weights
-moves F1 by 0.10 (Section~\ref{sec:protocol}), while the twelve published
-baselines span 0.11 between best and worst. A difference of this size, arising
-from measurement rather than modelling, is sufficient to reorder the benchmark.
-We do not suggest the reference implementation is incorrect---aggregation and
-label conventions are legitimate design choices---but they must be stated for a
-comparison to mean anything, and they are not currently recoverable from the
-published description alone. The identity
-$\mathrm{IoU} = \mathrm{F1}/(2-\mathrm{F1})$ offers a cheap diagnostic: any
-reported pair that violates it is not micro-averaged, and is therefore not
-comparable to a micro-averaged pair.}
+\paragraph*{\rev{Scoring convention affects reported figures as much as
+architecture does.}} \rev{Applying the reference scoring procedure to fixed model
+weights moves F1 by 0.10 (Section~\ref{sec:protocol}), while the twelve published
+baselines span 0.11 between best and worst. Both works measure the same tasks,
+but through different aggregation and label conventions, and a difference of this
+size means figures from the two cannot be placed on a common axis. The identity
+$\mathrm{IoU} = \mathrm{F1}/(2-\mathrm{F1})$ provides a cheap check: a reported
+pair that does not satisfy it is not micro-averaged, and comparison with a
+micro-averaged pair is not meaningful.}
 
-\paragraph*{\rev{Run-to-run variance on fire progression exceeds the spread
-between published architectures.}} \rev{Seeds differing in nothing else produce
-a standard deviation of \fpSD{} on the progression test set, against 0.021
+\paragraph*{\rev{Run-to-run variance on fire progression is large relative to the
+differences being compared.}} \rev{Seeds differing in nothing else give a
+standard deviation of \fpSD{} on the progression test set, against 0.021
 separating the five published baselines. Single-run comparisons on this task
-therefore cannot distinguish architectures, and reported orderings should be
-treated as provisional until repeated. Active fire detection behaves quite
-differently under the same pipeline, with a spread two orders of magnitude
-smaller; the difference lies in label sparsity and in the number of independent
-fire events available, not in the models.}
+therefore cannot reliably distinguish architectures, our own included. Active
+fire detection behaves differently under the same pipeline, with a spread two
+orders of magnitude smaller; the difference lies in label sparsity and in the
+small number of independent fire events, not in the models. Reporting seed
+variance before attributing a difference to an architecture seems to us the more
+transferable lesson of this study.}
 
 \paragraph*{\rev{Spatial-only convolutions are inexpensive rather than
 demonstrably superior.}} \rev{Our ablation (Section~\ref{sec:ablation}) does not
 resolve an accuracy difference between spatial-only and full 3D kernels at the
-sample size available, and we make no such claim. What it does establish is that
-full $(3,3,3)$ kernels cost $2.72\times$ the parameters without a measurable
-return on one- to two-day windows. The near-equivalence of our TS = 1 and TS = 2
-results points the same way: on windows this short there is little inter-day
-signal for a temporal filter to exploit. We expect this to hold for other
-short-window satellite tasks, but we have tested it on one benchmark only.}
+sample size available, and we make no such claim. It does establish that full
+$(3,3,3)$ kernels cost $2.72\times$ the parameters without measurable return on
+one- to two-day windows, and the near-equivalence of our TS = 1 and TS = 2
+results points the same way. The architecture makes no assumption specific to
+VIIRS---it requires only a short stack of co-registered multispectral rasters and
+a per-pixel target---so it should transfer in principle to Sentinel-2, Sentinel-3
+SLSTR or MODIS stacks, though we have not tested this.}
 
-\paragraph*{\rev{Centre-cropping discards most of the progression signal.}}
-\rev{A mean of 56.3\% of progression-labelled pixels fall outside the
-$256 \times 256$ crop, and the fraction lost predicts per-fire accuracy
-($\rho = -0.685$, $p = 0.0034$). Cropping is a near-universal convention adopted
-for memory reasons; on this dataset it means that any progression comparison is
-partly a comparison of how each model handles fires whose fronts have been
-cropped away. This is a property of the evaluation setup rather than of any
-model, and full-scene evaluation would remove it.}
-
-\paragraph*{\rev{Applicability beyond this benchmark.}} \rev{The architecture
-makes no assumption specific to VIIRS: it requires a short stack of
-co-registered multispectral rasters and a per-pixel target, so it transfers
-directly in principle to Sentinel-2, Sentinel-3 SLSTR or MODIS stacks, and to
-the Next Day Wildfire Spread formulation~\cite{huot2022next}. The SE modules
-reweight input channels adaptively, which is the mechanism most likely to carry
-over to a different band set. We have not tested any of this. More portable than
-the architecture, we think, are the two methodological findings: the
-F1--IoU identity as a check on reported metrics, and the practice of reporting
-seed variance before attributing a difference to an architecture, both of which
-apply to any segmentation benchmark.}
-
-\paragraph*{Limitations.} \rev{Five limitations bear on how these results should
+\paragraph*{Limitations.} \rev{Three limitations bear on how these results should
 be read. First, all conclusions rest on a single benchmark and a single sensor
-family; we have not validated them elsewhere. Second, the baselines were not
-retrained under our protocol, so the protocol decomposition isolates the
-measurement effect on our weights but does not establish how the baseline
-architectures would rank under a common evaluation. Third, the component
-ablation uses one run per reduced arm and is powered only to rule out large
-effects; the fire-progression variant is not ablated at all. Fourth, our
-active-fire results rest on \nseedAF{} runs and our progression results on
-\nseedFP{}, which is sufficient to establish the variance contrast reported here
-but not to place tight intervals on any individual figure. Fifth, we train no
-burned-area model: the audit establishes the label encoding and the exclusion
-lists, but the question of whether the Julian-day codes in band~8 can support
-multi-class or regression targets is left open.}
+family. Second, the baselines were not retrained under our protocol, so the
+decomposition of Section~\ref{sec:protocol} isolates the measurement effect on
+our own weights but does not establish how the baseline architectures would rank
+under a common evaluation. Third, the component ablation uses one run per reduced
+arm and is powered only to rule out large effects, and the fire-progression
+variant is not ablated at all; the seed variance measured on that task places a
+single-run ablation beyond useful resolution. We additionally train no
+burned-area model, so the question of whether the Julian-day codes in band 8 can
+support multi-class or regression targets is left open.}
 
 %%=============================================================
 \section{Conclusion}
@@ -1250,4 +1310,3 @@ baselines in a form that makes this audit and comparison possible.}
 \bibliography{refs}
 
 \end{document}
-
