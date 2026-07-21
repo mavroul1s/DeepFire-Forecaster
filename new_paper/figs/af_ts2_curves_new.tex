@@ -1,0 +1,33 @@
+% Training behaviour, AF TS=2 -- three panels
+\begin{tikzpicture}
+\begin{groupplot}[
+    group style={group size=3 by 1, horizontal sep=1.15cm},
+    width=0.365\linewidth, height=4.6cm,
+    xmin=0, xmax=80,
+    tick label style={font=\scriptsize},
+    label style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=gray!50, fill=white, fill opacity=0.85,
+                  text opacity=1, inner sep=1.5pt},
+    grid=major, grid style={dashed, gray!25},
+    xlabel={Epoch},
+]
+% --- (a) loss ---
+\nextgroupplot[ylabel={Loss}, ymin=0.10, ymax=0.55,
+               legend pos=north east, title={\scriptsize (a) Loss}]
+\addplot[blue!70, thick, no marks] table [x=epoch, y=train_loss] {figs/data/af_ts2_curves.dat};
+\addlegendentry{Train}
+\addplot[red!75, thick, no marks] table [x=epoch, y=val_loss] {figs/data/af_ts2_curves.dat};
+\addlegendentry{Validation}
+% --- (b) val F1 ---
+\nextgroupplot[ylabel={Validation F1}, ymin=0.40, ymax=0.86,
+               title={\scriptsize (b) Validation F1}]
+\addplot[green!45!black, thick, no marks] table [x=epoch, y=val_f1] {figs/data/af_ts2_curves.dat};
+% --- (c) precision / recall ---
+\nextgroupplot[ylabel={Score}, ymin=0.25, ymax=1.0,
+               legend pos=south east, title={\scriptsize (c) Precision \& recall}]
+\addplot[cyan!60!black, thick, no marks] table [x=epoch, y=val_prec] {figs/data/af_ts2_curves.dat};
+\addlegendentry{Precision}
+\addplot[orange!85!black, thick, no marks] table [x=epoch, y=val_rec] {figs/data/af_ts2_curves.dat};
+\addlegendentry{Recall}
+\end{groupplot}
+\end{tikzpicture}
