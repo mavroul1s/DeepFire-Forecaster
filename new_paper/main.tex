@@ -1120,7 +1120,7 @@ this dataset it discards the majority of the progression signal, so per-fire
 scores partly reflect how much of each fire survives the crop. Full-scene
 evaluation is left to future work.}
 
-\begin{figure}[H]
+\begin{figure}[tbp]
 \centering
 \input{figs/fp_crop.tex}
 \caption{\rev{Per-fire fire-progression F1 against the fraction of labelled
@@ -1131,7 +1131,7 @@ behaviour; Spearman $\rho = -0.685$, $p = 0.0034$, $n = 16$.}}
 \label{fig:fp_crop}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[tbp]
 \centering
 \input{figs/fp_per_fire.tex}
 \caption{\rev{Per-fire test F1 for SpaSE-UNet3D on 16 of the US\_2021 test
@@ -1424,7 +1424,6 @@ baselines in a form that makes this audit and comparison possible.}
 %%=============================================================
 
 \reftitle{References}
-\bibliographystyle{Definitions/mdpi}
 \bibliography{refs}
 
 \end{document}
