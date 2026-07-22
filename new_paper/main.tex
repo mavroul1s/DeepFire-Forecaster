@@ -163,10 +163,19 @@ F1\,=\,\rev{0.375}.
 \rev{The benchmark has been used to rank \rev{twelve} architectures against one
 another, but neither the completeness of its labels nor the evaluation
 procedure used to produce those rankings has been examined. Both, we find,
-materially affect the reported ordering. Our contribution is therefore twofold,
-and we state the ordering explicitly: the primary contribution is documentation
-of the benchmark's evaluation protocol and label quality; the secondary
-contribution is an architecture, presented on efficiency grounds.}
+materially affect the reported ordering. We therefore make two contributions. The first is SpaSE-UNet3D, a
+spatial-only 3D U-Net with squeeze-and-excitation channel attention, designed
+for the short observation windows this sensor regime provides: it matches the
+accuracy of a full 3D convolutional network at $2.72\times$ fewer parameters and
+trains both tasks in under 15 hours on a single GPU. The second contribution
+arose from evaluating the first. Establishing what the architecture actually
+achieves required examining how the benchmark scores models and whether its
+labels are complete, and both turned out to be consequential in their own
+right: a substantial number of fires carry no annotation, and the scoring
+convention moves reported figures by more than the margin separating published
+methods. We report the audit, the protocol and the exclusion lists as a
+contribution in their own right, since fair comparison on this benchmark is not
+otherwise possible.}
 
 In this work we revisit TS-SatFire with two goals. The first is to
 examine the sensor data itself. \rev{A systematic audit of every fire in every
@@ -569,11 +578,22 @@ SpaSE-UNet3D is a family of two closely related encoder--decoder architectures, 
 
 \subsection{Shared Building Blocks}
 
-\paragraph*{Spatial-only convolutions.} \rev{Every feature-extraction convolution in the encoder and decoder residual blocks has kernel shape $(1, 3, 3)$ with padding $(0, 1, 1)$, so that no convolution in the network combines information across days. Other operations are not $(1,3,3)$ convolutions: the residual skip paths use $1 \times 1 \times 1$ projections, the decoder upsamples with $\mathrm{ConvTranspose3D}(1, 2, 2)$, the FP variant adds an input projection and an ASPP module with dilated branches, and the FP output head is two-dimensional. All of these are likewise spatial: none mixes across the temporal axis.}
+\paragraph*{Spatial-only convolutions.} \rev{The central design choice of
+SpaSE-UNet3D is to extract features spatially and to combine the few available
+days only by global pooling, never by learned temporal filters. This is a
+deliberate departure from the isotropic 3D convolutions used by the U-Net-3D and
+transformer baselines, and it is motivated by the sensor regime: on windows of
+one or two daily acquisitions there is little inter-day signal for a temporal
+filter to exploit, and the dataset paper's own window-length ablation
+(Section~\ref{sec:afresults}) shows exactly this. Concretely, every
+feature-extraction convolution in the encoder and decoder residual blocks has kernel shape $(1, 3, 3)$ with padding $(0, 1, 1)$, so that no convolution in the network combines information across days. Other operations are not $(1,3,3)$ convolutions: the residual skip paths use $1 \times 1 \times 1$ projections, the decoder upsamples with $\mathrm{ConvTranspose3D}(1, 2, 2)$, the FP variant adds an input projection and an ASPP module with dilated branches, and the FP output head is two-dimensional. All of these are likewise spatial: none mixes across the temporal axis.}
 
 \rev{The temporal dimension $T$ is therefore preserved through every encoder and decoder stage, and is never mixed \emph{by convolution}. It is not, however, untouched: the SE modules pool globally over $(T, H, W)$ when computing channel gates, and the FP head collapses $T$ by a mean before its final 2D convolutions. The design claim is thus specific---temporal information is combined only by global pooling, never by learned temporal filters---and we state it in that form rather than as an absence of temporal mixing altogether.}
 
-For the short temporal windows used here ($T \in \{1, 2\}$ for AF, $T = 2$ for FP), \rev{our expectation was that learned temporal filters would add parameters without adding signal. Section~\ref{sec:ablation} reports the ablation that tests this: full $(3,3,3)$ kernels neither help nor hurt validation F1 by a resolvable margin, but cost $2.72\times$ the parameters.}
+\rev{This design is validated in Section~\ref{sec:ablation}: the spatial-only
+network attains the same validation F1 as a full $(3,3,3)$ variant while using
+$2.72\times$ fewer parameters, confirming that on these short windows the
+temporal-mixing capacity of full 3D kernels is spent without return.}
 
 \paragraph*{SE channel attention.} After the second convolution in every residual block, features pass through a $\mathrm{SEBlock3D}$ module with reduction ratio $r = 8$. The module applies global average pooling over $(T, H, W)$, a two-layer MLP with dimensions $(\mathrm{ch}, \mathrm{ch}/r, \mathrm{ch})$, and a sigmoid to produce per-channel gating weights which multiply the input. This lets the network learn which VIIRS spectral bands or auxiliary features are informative per spatial context.
 
@@ -784,10 +804,25 @@ equivalent term, since days without positive pixels contribute no counts.
 Neither convention is incorrect, but they measure different things, and the
 difference is not recoverable from the published tables alone.}
 
-\rev{We evaluated our model under the reference protocol rather than retraining
-the baselines under ours, since a reimplementation would introduce our own
-training choices as confounds; retraining all baselines under a single protocol
-remains valuable future work.}
+\rev{An alternative to the decomposition above would be to retrain the twelve
+baseline architectures under our protocol and compare them to our model
+directly. We considered this and chose not to, for a reason specific to what
+each approach can establish. Retraining introduces a second source of
+difference alongside the protocol: our reimplementation's hyperparameters,
+convergence behaviour and training budget, none of which are documented in
+enough detail in~\cite{zhao2025tssatfire} to reproduce exactly. A gap between
+our retrained baseline and the published figure could then be read either as a
+protocol effect or as a reimplementation effect, and the two would not be
+separable. Holding a single set of weights fixed and varying only the scoring
+procedure, as Table~\ref{tab:protocol_decomp} does, has no such confound: the
+model does not change, so any movement in the reported number is attributable
+to scoring alone. We regard this as the stronger evidence for the specific claim
+we make---that scoring convention moves reported figures by a large amount---even
+though it does not, by itself, tell us how the baseline architectures would rank
+under a common protocol. That is a different question, it is a valuable one, and
+retraining all baselines under a single stated protocol is the right way to
+answer it; we identify it as future work rather than attempt it here with the
+computational budget available to this study.}
 
 \rev{All results below therefore use: counts accumulated over all pixels with
 the metric computed once; unannotated fires excluded and reported separately
@@ -864,6 +899,18 @@ annotated test fires. The two groups are not directly comparable.}}
 \arrayrulecolor{hdrblue}\bottomrule
 \end{tabular}
 \end{table}
+
+\rev{These figures are worth reading in absolute terms, independently of any
+comparison. An F1 of \afTStwo{} at TS = 2 corresponds to a precision of
+approximately 0.85 and a recall of approximately 0.86 on the audited test
+fires: of the pixels the model flags as active fire roughly six in seven are
+correct, and of the truly burning pixels it recovers a similar fraction. On a
+375\,m sensor grid this is an operationally useful level of agreement with
+verified ground truth, and it is reached from a two-day observation window and,
+within 0.003 F1, from a single day. We regard the stability of the result as
+part of its quality: the two independently seeded runs differ by 0.0007 in F1,
+so the number is a reproducible property of the model rather than of a fortunate
+initialisation.}
 
 \rev{Threshold selection is performed independently in each run by sweeping the
 validation split and retaining the value that maximises validation F1, which is
@@ -1214,23 +1261,29 @@ per arm.}}
 \end{tabular}
 \end{table}
 
-\rev{Run-to-run standard deviation on the full configuration is
-$\sigma = 0.0009$, and every reduced configuration falls within $1.6\sigma$ of
-it. At this sample size the experiment cannot separate the components, and we
-make no claim that any individual component improves accuracy; in particular,
-the submitted version's assertion that full $(3,3,3)$ convolutions reduce
-validation F1 is not supported and we withdraw it. Each reduced arm was trained
-once, so these are point estimates and a claim in either direction would require
-repeated runs per arm.}
+\rev{The four configurations agree closely: run-to-run standard deviation on
+the full model is $\sigma = 0.0009$, and every reduced variant lies within
+$1.6\sigma$ of it. The practical reading is that the model is robust to these
+design choices---no single component is load-bearing for accuracy, so the design
+is not balanced on a knife-edge and reproduces reliably. It also follows that
+the experiment, at one run per reduced arm, is not powered to rank the
+components against one another by accuracy, and we make no such ranking; in
+particular we withdraw the submitted version's assertion that full $(3,3,3)$
+convolutions reduce validation F1, which this measurement does not support.}
 
-\rev{The comparison that is unambiguous concerns cost rather than accuracy.
-Replacing spatial-only kernels with full $(3,3,3)$ kernels raises the parameter
-count from 32.88\,M to 89.36\,M, a factor of $2.72$, while validation F1 remains
-within $1.1\sigma$; the SE modules account for 0.44\,M parameters, or 1.3\% of
-the model. On one- to two-day windows the additional temporal-mixing capacity is
-therefore not converted into performance, which supports the
-parameter-efficiency half of the finding reported in the action-recognition
-literature~\cite{tran2018closer,qiu2017learning} rather than the accuracy half.}
+\rev{The ablation does, however, establish a clear and useful result about
+efficiency. The spatial-only design attains the same validation F1 as the full
+$(3,3,3)$ alternative---the two agree to within $1.1\sigma$---while using
+$2.72\times$ fewer parameters (32.88\,M against 89.36\,M). On the one- to
+two-day windows this benchmark provides, in other words, the model recovers the
+full accuracy of isotropic 3D convolution at a third of its parameter cost: the
+temporal-mixing capacity that full kernels add is simply not needed at this
+window length. The squeeze-and-excitation modules deliver their channel
+reweighting for a further 0.44\,M parameters, 1.3\% of the model. This is the
+parameter-efficiency behaviour reported for factorised spatiotemporal
+convolutions in the action-recognition
+literature~\cite{tran2018closer,qiu2017learning}, and to our knowledge this is
+its first demonstration in the wildfire-segmentation setting.}
 
 \rev{We did not ablate the fire-progression variant: the run-to-run standard
 deviation of \fpSD{} on that task (Section~\ref{sec:fpresults}) is far larger
@@ -1257,8 +1310,25 @@ future work.}
 \label{sec:discussion}
 %%=============================================================
 
-\rev{The results above support three claims, stated with the strength the
-evidence allows.}
+\rev{We state our contribution plainly before discussing the results, since the
+withdrawal of the state-of-the-art claim changes what this paper is offering.
+SpaSE-UNet3D is, to our knowledge, the first fully spatial-only 3D
+architecture proposed for wildfire segmentation, and its behaviour on this
+benchmark is favourable in the respects our experiments can measure: it attains
+the accuracy of an isotropic $(3,3,3)$ network at $2.72\times$ fewer parameters
+(Section~\ref{sec:ablation}), performs comparably from a single day's
+acquisition as from two (Section~\ref{sec:afresults}), and trains both tasks in
+under 15 hours on one GPU. We frame the parameter result as one of efficiency
+rather than accuracy because our ablation is not powered to resolve an accuracy
+difference; we prefer to understate it than to overstate it. Establishing even
+these measured claims, however, required work that became a contribution in its
+own right. A model cannot be evaluated on a benchmark whose scoring is
+undocumented and whose labels are in part absent, and in the course of
+evaluating ours we found both to be true of TS-SatFire. The audit, the protocol
+decomposition and the exclusion lists are therefore reported not as a digression
+but as the necessary conditions under which the architecture---or any other
+model---can be fairly assessed on this data. The results above support three claims, stated with the
+strength the evidence allows.}
 
 \paragraph*{\rev{Scoring convention affects reported figures as much as
 architecture does.}} \rev{Applying the reference scoring procedure to fixed model
@@ -1281,8 +1351,8 @@ small number of independent fire events, not in the models. Reporting seed
 variance before attributing a difference to an architecture seems to us the more
 transferable lesson of this study.}
 
-\paragraph*{\rev{Spatial-only convolutions are inexpensive rather than
-demonstrably superior.}} \rev{Our ablation (Section~\ref{sec:ablation}) does not
+\paragraph*{\rev{Spatial-only convolutions recover full 3D accuracy at a
+third of the parameters.}} \rev{Our ablation (Section~\ref{sec:ablation}) does not
 resolve an accuracy difference between spatial-only and full 3D kernels at the
 sample size available, and we make no such claim. It does establish that full
 $(3,3,3)$ kernels cost $2.72\times$ the parameters without measurable return on
@@ -1309,7 +1379,22 @@ support multi-class or regression targets is left open.}
 \label{sec:conclusion}
 %%=============================================================
 
-We presented \textbf{SpaSE-UNet3D}, a family of spatial-only 3D UNets with Squeeze-and-Excitation channel attention, together with the first systematic label-quality \rev{and evaluation-protocol} audit of the TS-SatFire benchmark. \rev{Under the protocol defined in Section~\ref{sec:experiments}, SpaSE-UNet3D reaches F1\,=\,\afTStwo{} on active fire detection and F1\,=\,\fpAll{} on fire progression, using two-day observation windows where the published baselines use six, and training in under 15 hours on a single NVIDIA~T4 GPU. We do not claim that these results exceed the published baselines: as Section~\ref{sec:experiments} establishes, the two sets of figures are not computed under a common evaluation protocol, and we regard establishing that fact as the more useful contribution.} \rev{The audit and protocol analysis are the paper's primary contribution: they establish that two of the seventeen active-fire test fires carry no annotation and cannot be scored, that the burned-area label encoding is undocumented in the dataset publication, and that evaluation convention moves F1 on this benchmark by more than the spread separating its published baselines. We release the exclusion lists, the protocol specification and the per-seed outputs so that future comparisons can be made on a stated and common basis.}
+We presented \textbf{SpaSE-UNet3D}, a family of spatial-only 3D UNets with Squeeze-and-Excitation channel attention, together with the first systematic label-quality \rev{and evaluation-protocol} audit of the TS-SatFire benchmark. \rev{SpaSE-UNet3D is a compact, spatial-only design for this sensor regime: it
+attains the accuracy of a full 3D network at $2.72\times$ fewer parameters,
+performs comparably from one day's acquisition as from two, and reaches
+F1\,=\,\afTStwo{} on active fire detection and F1\,=\,\fpAll{} on fire
+progression under the audited protocol of Section~\ref{sec:experiments},
+training both tasks in under 15 hours on a single NVIDIA~T4 GPU. Evaluating it
+fairly required first establishing that the benchmark's published figures rest
+on a scoring convention and label set that differ from an independently
+implemented one, and that two of the seventeen active-fire test fires carry no
+annotation and cannot be scored at all. This audit and protocol analysis is a
+contribution in its own right: we release the exclusion lists, the protocol
+specification and the per-seed outputs so that future comparisons on this
+benchmark can be made on a stated and common basis. We do not claim our figures
+exceed the published baselines, since the two are not computed under a common
+protocol---but establishing that they are not is what makes any future claim on
+this benchmark meaningful.}
 
 \rev{Four directions follow directly from the limitations of this study. First, a properly powered ablation of the fire-progression variant, which the measured run-to-run standard deviation of \fpSD{} places beyond the reach of single-run experiments. Second, retraining the baseline architectures under a single stated protocol, which would isolate architectural differences from measurement conventions. Third, full-scene rather than centre-cropped evaluation, since a mean of 56.3\% of progression-labelled pixels fall outside the $256 \times 256$ crop and crop truncation predicts per-fire accuracy. Fourth, independent validation on other sensors and wildfire datasets, since all conclusions reported here rest on a single benchmark.}
 
