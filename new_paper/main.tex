@@ -185,7 +185,7 @@ that carry no annotation cannot be scored, so any test aggregate over the full
 split is determined for those fires by the convention adopted for empty ground
 truth rather than by model behaviour. We document the exclusion lists, the
 undocumented burned-area label encoding, and the effect of filtering at fire and
-day level, and we measure rather than assert the consequence for accuracy.}
+day level, and we measure the consequence for accuracy instead of asserting it.}
 
 The second goal is architectural. The TS-SatFire sensor input is
 very short: operational constraints and paper conventions favour
@@ -346,7 +346,7 @@ thermal channels supplied in the separate VIIRS\_Day raster.}}
 \end{tabular}
 \end{table}
 
-\rev{Probing 62 fires, only the two precipitation bands (3 and 15) are ever uniformly zero---in 12 and 5 fires respectively---which is expected for events burning through periods without rainfall, and indicates valid measurements rather than missing data.}
+\rev{Probing 62 fires, only the two precipitation bands (3 and 15) are ever uniformly zero---in 12 and 5 fires respectively---which is expected for events burning through periods without rainfall, and indicates valid measurements, not missing data.}
 
 \subsection{Labels}
 
@@ -424,9 +424,7 @@ of its labelled pixels; among the progression test fires, four lose more than
 
 \rev{The consequence is that for a substantial fraction of events the model is
 asked to predict a target that is largely absent from its input, and is scored
-on the discrepancy. This is a property of the evaluation setup rather than of
-any model, and it applies equally to every method evaluated under the same
-convention. Section~\ref{sec:fpresults} shows that the fraction of positive
+on the discrepancy. This is a property of the evaluation setup, not of any model, and it applies equally to every method evaluated under the same convention. Section~\ref{sec:fpresults} shows that the fraction of positive
 pixels lost to the crop predicts per-fire progression accuracy, and is a
 sufficient explanation for the low-scoring cases without appeal to fire
 behaviour. We report all results under the cropped protocol for consistency with
@@ -494,8 +492,7 @@ fires and seven of the 17 named test fires likewise carry no burned-area label.
 Because the two tasks read different bands of the same rasters, the AF and BA
 exclusion lists overlap but do not coincide: a fire may carry active-fire
 detections while its burned-area band is empty, and the reverse also occurs.
-We release both lists in full rather than summarising the overlap, since the
-relevant list depends on the task being trained.}
+We release both lists in full, since the relevant list depends on the task being trained and a summary of the overlap would not suffice.}
 
 In addition to the missing-label audit, we also document the practical encoding of band 8 in the released GeoTIFFs. Zhao et~al.~\cite{zhao2025tssatfire} describe how the labels are produced (union of accumulated VIIRS active-fire detections and NIFC perimeters, with manual quality control on the test set) but do not specify the storage convention in the released rasters --- a small but important detail for downstream users. Empirically we find that finite values in band 8 span the range $[2{,}119,\,908{,}660]$, consistent with Julian-day codes or perimeter identifiers from the MCD64A1 MODIS burned-area product rather than a binary or thresholded indicator. $100\%$ of finite pixels are burned pixels; there are no finite non-burn values. The correct extraction of a binary BA mask is therefore presence-of-finite, as stated in Section~\ref{sec:dataset}. Documenting this encoding is a prerequisite for any future BA modelling on TS-SatFire.
 
@@ -588,7 +585,7 @@ filter to exploit, and the dataset paper's own window-length ablation
 (Section~\ref{sec:afresults}) shows exactly this. Concretely, every
 feature-extraction convolution in the encoder and decoder residual blocks has kernel shape $(1, 3, 3)$ with padding $(0, 1, 1)$, so that no convolution in the network combines information across days. Other operations are not $(1,3,3)$ convolutions: the residual skip paths use $1 \times 1 \times 1$ projections, the decoder upsamples with $\mathrm{ConvTranspose3D}(1, 2, 2)$, the FP variant adds an input projection and an ASPP module with dilated branches, and the FP output head is two-dimensional. All of these are likewise spatial: none mixes across the temporal axis.}
 
-\rev{The temporal dimension $T$ is therefore preserved through every encoder and decoder stage, and is never mixed \emph{by convolution}. It is not, however, untouched: the SE modules pool globally over $(T, H, W)$ when computing channel gates, and the FP head collapses $T$ by a mean before its final 2D convolutions. The design claim is thus specific---temporal information is combined only by global pooling, never by learned temporal filters---and we state it in that form rather than as an absence of temporal mixing altogether.}
+\rev{The temporal dimension $T$ is therefore preserved through every encoder and decoder stage, and is never mixed \emph{by convolution}. It is not, however, untouched: the SE modules pool globally over $(T, H, W)$ when computing channel gates, and the FP head collapses $T$ by a mean before its final 2D convolutions. The design claim is thus specific---temporal information is combined only by global pooling, never by learned temporal filters---and we state it in that precise form, not as an absence of temporal mixing altogether.}
 
 \rev{This design is validated in Section~\ref{sec:ablation}: the spatial-only
 network attains the same validation F1 as a full $(3,3,3)$ variant while using
@@ -1116,8 +1113,7 @@ predict progression on a crop containing a small fragment of the fire front is
 being evaluated on a task whose ground truth is largely absent from its input.
 The extreme case, \textit{CA-4086} at F1 = 0.007, has eight usable windows in
 total with a progression increment occupying less than 0.01\% of the crop; the
-model returns near-zero probability across the scene, which is the correct
-response to the input it is given, and is scored close to zero for it.}
+model returns near-zero probability across the scene, which is the correct response to the input it is given---and is scored close to zero for it.}
 
 \rev{Centre-cropping is a standard convention adopted for memory reasons, but on
 this dataset it discards the majority of the progression signal, so per-fire
@@ -1148,7 +1144,7 @@ reasons given in Section~\ref{sec:protocol}.}}
 \label{fig:fp_per_fire}
 \end{figure}
 
-To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for \rev{16 test fires from a single run}, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model propagates the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain and weather covariates. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) rather than a complete shape mismatch. The lower-F1 fires reveal the dominant failure mode identified above: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop, so that a single mispredicted patch dominates the score. \rev{These cases motivate reporting per-fire F1 alongside the aggregate, since a single truncated fire can shift the micro-averaged figure disproportionately.}
+To examine prediction quality qualitatively, Fig.~\ref{fig:fp_maps} shows one representative window per fire for \rev{16 test fires from a single run}, ordered by F1 from best (top-left) to worst (bottom-right). Most fires display predicted progression masks that closely follow the ground-truth perimeter shape: the model propagates the active-fire front in the direction implied by the cumulative burned-area channel and the FirePred terrain and weather covariates. Misalignment, where it occurs, manifests as a slight directional offset (\textit{ID-4558}, \textit{CA-3658}) instead of a complete shape mismatch. The lower-F1 fires reveal the dominant failure mode identified above: \textit{ID-4762}, \textit{CA-3627}, and \textit{WA-4879} have very small ground-truth progression footprints relative to the crop, so that a single mispredicted patch dominates the score. \rev{These cases motivate reporting per-fire F1 alongside the aggregate, since a single truncated fire can shift the micro-averaged figure disproportionately.}
 
 \begin{figure}[!tbp]
 \centering
@@ -1199,7 +1195,7 @@ table above.}
 \label{fig:fp_maps}
 \end{figure}
 
-Table~\ref{tab:fp_resource} summarises the resource footprint for both tasks. \rev{SpaSE-UNet3D's parameter count---24.28\,M for FP and 32.88\,M for AF---is in the same regime as the published 3D U-Net and transformer baselines rather than markedly smaller, and we make no claim of a parameter advantage over them. The efficiency argument rests instead on the temporal budget and the training cost: each configuration trains in between 3.5 and 6.5 hours on a single NVIDIA T4, using two-day observation windows where the published baselines use six.}
+Table~\ref{tab:fp_resource} summarises the resource footprint for both tasks. \rev{SpaSE-UNet3D's parameter count---24.28\,M for FP and 32.88\,M for AF---is in the same regime as the published 3D U-Net and transformer baselines, not markedly smaller, and we make no claim of a parameter advantage over them. The efficiency argument rests instead on the temporal budget and the training cost: each configuration trains in between 3.5 and 6.5 hours on a single NVIDIA T4, using two-day observation windows where the published baselines use six.}
 
 \begin{table}[H]
 \centering
