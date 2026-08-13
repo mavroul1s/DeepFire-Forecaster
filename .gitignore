@@ -30,6 +30,6 @@ __pycache__/
 Thumbs.db
 
 
-# Paper folder: track only the compiled PDF
-paper/*
-!paper/main.pdf
+# Paper folder: not tracked (published version is on MDPI, open access)
+paper/
+paper.zip

@@ -1,8 +1,10 @@
 # DeepFire-Forecaster — SpaSE-UNet3D
 
+### 📄 [Read the paper — *Sensors* **26**(16), 5116 (2026)](https://www.mdpi.com/1424-8220/26/16/5116)
+
 > **SpaSE-UNet3D: Sensor-Driven Wildfire Detection and Progression Prediction from VIIRS Multispectral Imagery**
 > Nikolaos Mavros, Dimitrios Katsaros — University of Thessaly, Volos, Greece
-> **Published in *Sensors* (MDPI), 2026.** · [paper/main.pdf](paper/main.pdf)
+> Published open access in *Sensors* (MDPI) · DOI [10.3390/sensors26165116](https://doi.org/10.3390/sensors26165116)
 
 ---
 
@@ -290,7 +292,6 @@ weight derived from the training split's class balance rather than hand-tuned. 8
 
 ```
 docs/                    per-fire exclusion lists (AF / BA / FP)
-paper/main.pdf           published manuscript
 active_fire/             README, diagnostics, af_1_day_input/ + af_2_day_input/ (train + inf)
 burned_area/             README, label-audit notebook
 fire_progression/        README, diagnostics, fire_pred_2_day_input/ (notebook + results)
@@ -332,8 +333,10 @@ and rules out only large effects. We train no BA model.
              Prediction from {VIIRS} Multispectral Imagery},
   author  = {Mavros, Nikolaos and Katsaros, Dimitrios},
   journal = {Sensors},
-  year    = {2026},
-  publisher = {MDPI}
+  volume  = {26}, number = {16}, pages = {5116}, year = {2026},
+  publisher = {MDPI},
+  doi     = {10.3390/sensors26165116},
+  url     = {https://www.mdpi.com/1424-8220/26/16/5116}
 }
 
 @article{zhao2025tssatfire,
