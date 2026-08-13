@@ -4,7 +4,7 @@
 
 > **SpaSE-UNet3D: Sensor-Driven Wildfire Detection and Progression Prediction from VIIRS Multispectral Imagery**
 > Nikolaos Mavros, Dimitrios Katsaros — University of Thessaly, Volos, Greece
-> Published open access in *Sensors* (MDPI) · DOI [10.3390/sensors26165116](https://doi.org/10.3390/sensors26165116)
+> Published open access in *Sensors* (MDPI) · DOI [10.3390/s26165116](https://doi.org/10.3390/s26165116)
 
 ---
 
@@ -335,7 +335,7 @@ and rules out only large effects. We train no BA model.
   journal = {Sensors},
   volume  = {26}, number = {16}, pages = {5116}, year = {2026},
   publisher = {MDPI},
-  doi     = {10.3390/sensors26165116},
+  doi     = {10.3390/s26165116},
   url     = {https://www.mdpi.com/1424-8220/26/16/5116}
 }
 
